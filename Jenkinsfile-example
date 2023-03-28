@@ -23,6 +23,24 @@ pipeline {
                 build job:'deploy-to-staging'
             }
         }
+
+        stage('Deploy to Production'){
+            steps{
+                timeout(time:5, unit:'DAYS'){
+                    input message:'whether to deploy to the production env' submitter
+                }
+                build job:'deploy-to-production'
+            }
+            post{
+                success{
+                    echo 'The code successfully deployed to the production env'
+                }
+
+                failure{
+                    echo 'Deployed fail'
+                }
+            }
+        }
     }
 
   
