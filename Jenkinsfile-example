@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     tools{
             maven 'local maven'
     }
@@ -13,15 +12,9 @@ pipeline {
             }
             post {
                  success {
-                    echo 'start save document'
+                    echo 'start to save document'
                     archiveArtifacts artifacts: '**/target/*.war'
                  }
-            }
-        }
-
-        stage ('build'){
-            steps{
-                     echo "Code Deployed......"
             }
         }
     }
