@@ -1,17 +1,48 @@
 pipeline {
     agent any
-    tools{
-        maven 'local maven'
+    parameters{
+        string(name: 'tomcat_dev', defaultValue: '13.210.122.186', description: 'Staging Server')
+        string(name: 'tomcat_prod', defaultValue: '3.27.83.247', description: 'Production Server')
     }
+    tools{
+            maven 'local maven'
+    }
+
     stages{
-        stage ('build'){
+
+        stage ('Build'){
             steps{
-                sh 'mvn clean package'
-                sh "/usr/local/bin/docker build . -t tomcatwebapp:${env.BUILD_ID}"
-        
+                  bat 'mvn clean package'
+            }
+
+            post {
+                 success {
+                    echo 'start to save document'
+                    archiveArtifacts artifacts: '**/target/*.war'
+                 }
             }
         }
     }
 
-  
+
+    triggers {
+        pollSCM('* * * * *')
+    }
+
+    stage ('Deployments'){
+        parallel{
+            stage ('Deploy to Staging'){
+                steps {
+                    sh "scp -i /Users/Administrator/Documents/Tony/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
+                }
+            }
+
+            stage ('Deploy to Production'){
+                steps {
+                    sh "scp -i /Users/Administrator/Documents/Tony/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
+                }
+            }
+        }
+    }
+
 }
