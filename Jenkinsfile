@@ -34,13 +34,13 @@ pipeline {
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        bat "scp -i /Users/Administrator/Documents/Tony/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
+                        bat "scp -i /home/jenkins/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
                     }
                 }
 
                 stage ('Deploy to Production'){
                     steps {
-                        bat "scp -i /Users/Administrator/Documents/Tony/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
+                        bat "scp -i /home/jenkins/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
                     }
                 }
             }
