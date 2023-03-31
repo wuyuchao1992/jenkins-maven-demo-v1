@@ -4,6 +4,13 @@ pipeline {
         string(name: 'tomcat_dev', defaultValue: '13.210.122.186', description: 'Staging Server')
         string(name: 'tomcat_prod', defaultValue: '3.27.83.247', description: 'Production Server')
     }
+
+
+    triggers {
+        pollSCM('* * * * *')
+    }
+
+
     tools{
             maven 'local maven'
     }
@@ -22,11 +29,6 @@ pipeline {
                  }
             }
         }
-    }
-
-
-    triggers {
-        pollSCM('* * * * *')
     }
 
     stage ('Deployments'){
