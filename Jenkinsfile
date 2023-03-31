@@ -10,6 +10,9 @@ pipeline {
         pollSCM('* * * * *')
     }
 
+    environment {
+                    SSH_KEY_FOR_AWS = credentials('SSH_KEY_FOR_AWS')
+                }
 
     tools{
             maven 'local maven'
@@ -34,13 +37,13 @@ pipeline {
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        bat "scp -i /home/jenkins/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
+                        bat "scp -i $SSH_KEY_FOR_AWS **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
                     }
                 }
 
                 stage ('Deploy to Production'){
                     steps {
-                        bat "scp -i /home/jenkins/tomcat-demo-v1.pem **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
+                        bat "scp -i $SSH_KEY_FOR_AWS **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
                     }
                 }
             }
