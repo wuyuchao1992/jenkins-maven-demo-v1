@@ -1,8 +1,7 @@
 pipeline {
     agent any
     parameters{
-        string(name: 'tomcat_dev', defaultValue: '13.210.122.186', description: 'Staging Server')
-        string(name: 'tomcat_prod', defaultValue: '3.27.83.247', description: 'Production Server')
+        string(name: 'tomcat_dev', defaultValue: '3.25.192.231', description: 'Staging Server')
     }
 
 
@@ -15,7 +14,7 @@ pipeline {
                 }
 
     tools{
-            maven 'local maven'
+            maven 'maven3.9.1'
     }
 
     stages{
@@ -40,15 +39,8 @@ pipeline {
                         bat "scp -i %SSH_KEY_FOR_AWS% **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
                     }
                 }
-
-                stage ('Deploy to Production'){
-                    steps {
-                        bat "scp -i %SSH_KEY_FOR_AWS% **/target/*.war ec2-user@${params.tomcat_prod}:/var/lib/tomcat9/webapps"
-                    }
-                }
             }
         }
-
     }
 
 }
