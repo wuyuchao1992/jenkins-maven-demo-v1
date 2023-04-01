@@ -3,45 +3,11 @@ pipeline {
     tools{
             maven 'local maven'
     }
-
     stages{
-
-        stage ('Build'){
+        stage('Build'){
             steps{
-                  bat 'mvn clean package'
-            }
-            post {
-                 success {
-                    echo 'start to save document'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                 }
-            }
-        }
-
-        stage('Deploy to staging'){
-            steps{
-                build job:'deploy-to-staging'
-            }
-        }
-
-        stage('Deploy to Production'){
-            steps{
-                timeout(time:5, unit:'DAYS'){
-                    input message: 'whether to deploy to the production env?'
-                }
-                build job:'deploy-to-production'
-            }
-            post{
-                success{
-                    echo 'The code successfully deployed to the production env'
-                }
-
-                failure{
-                    echo 'Deployed fail'
-                }
+                bat 'maven clean package'
             }
         }
     }
-
-  
 }
