@@ -21,7 +21,7 @@ pipeline {
 
         stage ('Build'){
             steps{
-                  bat 'mvn clean package'
+                  sh 'mvn clean package'
             }
 
             post {
@@ -36,7 +36,7 @@ pipeline {
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        bat "scp -i %SSH_KEY_FOR_AWS% **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
+                        sh "scp -i %SSH_KEY_FOR_AWS% **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
                     }
                 }
             }
