@@ -10,7 +10,7 @@ pipeline {
     }
 
     environment {
-                    SSH_KEY_FOR_AWS = credentials('SSH_KEY_FOR_AWS')
+                    SSH_KEY_FOR_AWS = credentials('SSH_KEY')
                 }
 
     tools{
