@@ -9,9 +9,9 @@ pipeline {
         pollSCM('* * * * *')
     }
 
-    environment {
-                    SSH_KEY_FOR_AWS = credentials('SSH_KEY_FOR_AWS')
-                }
+//     environment {
+//                     SSH_KEY_FOR_AWS = credentials('SSH_KEY_FOR_AWS')
+//                 }
 
     tools{
             maven 'maven3.9.1'
