@@ -36,7 +36,7 @@ pipeline {
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        sh "scp -i $SSH_KEY_FOR_AWS **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
+                        sh "scp -i %SSH_KEY_FOR_AWS% **/target/*.war ec2-user@${params.tomcat_dev}:/var/lib/tomcat9/webapps"
                     }
                 }
             }
