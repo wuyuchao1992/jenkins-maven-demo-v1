@@ -1,29 +1,46 @@
-// 定义一个异步函数，用于发送DELETE请求
-async function deleteData(url: string): Promise<void> {
+import { request } from 'undici';
+
+// 定义一个异步函数，用于发送带有请求体的DELETE请求
+async function deleteDataWithBody(url: string, body: Record<string, any>, timeout: number = 5000, retries: number = 3): Promise<void> {
     try {
-        // 使用fetch发送DELETE请求
-        const response = await fetch(url, {
+        // 设置请求配置
+        const options = {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                // 可以根据需要添加其他HTTP头部信息
             },
-        });
+            body: JSON.stringify(body),
+            connectTimeout: timeout, // 设置连接超时时间
+        };
+
+        // 发送请求
+        const { statusCode, body: responseBody } = await request(url, options);
 
         // 检查响应状态码
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new Error(`HTTP error! Status: ${statusCode}`);
         }
 
         // 可选：处理响应数据
-        const data = await response.json();
+        const data = await responseBody.json();
         console.log('Response data:', data);
     } catch (error) {
-        // 处理错误
-        console.error('Error:', error);
+        if (retries > 0) {
+            console.error('Request failed, retrying...', retries, 'retries left');
+            await new Promise(res => setTimeout(res, 1000)); // 延迟1秒后重试
+            return deleteDataWithBody(url, body, timeout, retries - 1);
+        } else {
+            console.error('Error:', error);
+        }
     }
 }
 
-// 调用deleteData函数并传入URL
-const url = 'https://api.example.com/item/123';
-deleteData(url);
+// 调用deleteDataWithBody函数并传入URL和请求体
+const url = 'https://api.example.com/item';
+const body = {
+    id: '123',
+    type: 'example',
+    reason: 'no longer needed'
+};
+
+deleteDataWithBody(url, body);
