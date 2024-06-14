@@ -1,46 +1,51 @@
-import { request } from 'undici';
+import { AsyncLocalStorage } from 'async_hooks';
 
-// 定义一个异步函数，用于发送带有请求体的DELETE请求
-async function deleteDataWithBody(url: string, body: Record<string, any>, timeout: number = 5000, retries: number = 3): Promise<void> {
-    try {
-        // 设置请求配置
-        const options = {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-            connectTimeout: timeout, // 设置连接超时时间
-        };
+class Context {
+  private static instance: Context;
+  private asyncLocalStorage: AsyncLocalStorage<Map<string, any>>;
 
-        // 发送请求
-        const { statusCode, body: responseBody } = await request(url, options);
+  private constructor() {
+    this.asyncLocalStorage = new AsyncLocalStorage();
+  }
 
-        // 检查响应状态码
-        if (statusCode < 200 || statusCode >= 300) {
-            throw new Error(`HTTP error! Status: ${statusCode}`);
-        }
-
-        // 可选：处理响应数据
-        const data = await responseBody.json();
-        console.log('Response data:', data);
-    } catch (error) {
-        if (retries > 0) {
-            console.error('Request failed, retrying...', retries, 'retries left');
-            await new Promise(res => setTimeout(res, 1000)); // 延迟1秒后重试
-            return deleteDataWithBody(url, body, timeout, retries - 1);
-        } else {
-            console.error('Error:', error);
-        }
+  public static getInstance(): Context {
+    if (!Context.instance) {
+      Context.instance = new Context();
     }
+    return Context.instance;
+  }
+
+  public run<T>(callback: () => T): T {
+    const store = new Map<string, any>();
+    return this.asyncLocalStorage.run(store, callback);
+  }
+
+  public set(key: string, value: any): void {
+    const store = this.asyncLocalStorage.getStore();
+    if (store) {
+      store.set(key, value);
+    } else {
+      throw new Error('Context not initialized. Use run() to initialize the context.');
+    }
+  }
+
+  public get(key: string): any {
+    const store = this.asyncLocalStorage.getStore();
+    if (store) {
+      return store.get(key);
+    } else {
+      throw new Error('Context not initialized. Use run() to initialize the context.');
+    }
+  }
+
+  public delete(key: string): void {
+    const store = this.asyncLocalStorage.getStore();
+    if (store) {
+      store.delete(key);
+    } else {
+      throw new Error('Context not initialized. Use run() to initialize the context.');
+    }
+  }
 }
 
-// 调用deleteDataWithBody函数并传入URL和请求体
-const url = 'https://api.example.com/item';
-const body = {
-    id: '123',
-    type: 'example',
-    reason: 'no longer needed'
-};
-
-deleteDataWithBody(url, body);
+export default Context;
