@@ -2,9 +2,11 @@ import { AsyncLocalStorage } from 'async_hooks';
 
 const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
 
-export function runWithContext<T>(callback: () => T): T {
+export async function runWithContext<T>(callback: () => Promise<T>): Promise<T> {
   const store = new Map<string, any>();
-  return asyncLocalStorage.run(store, callback);
+  return asyncLocalStorage.run(store, async () => {
+    return await callback();
+  });
 }
 
 export function setContextValue(key: string, value: any): void {
