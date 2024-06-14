@@ -1,42 +1,7 @@
-import { AsyncLocalStorage } from 'async_hooks';
+import { runWithContext } from '../context';
 
-const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
-
-export function runWithContext<T>(callback: () => T): T {
-  const store = new Map<string, any>();
-  return asyncLocalStorage.run(store, callback);
-}
-
-export function setContextValue(key: string, value: any): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.set(key, value);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
-  }
-}
-
-export function getContextValue(key: string): any {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    return store.get(key);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
-  }
-}
-
-export function deleteContextValue(key: string): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.delete(key);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
-  }
-}
-
-export function clearContext(): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.clear();
-  }
+export function withContext(stepFunction: () => void | Promise<void>) {
+  return function (...args: any[]) {
+    return runWithContext(() => stepFunction.apply(this, args));
+  };
 }
