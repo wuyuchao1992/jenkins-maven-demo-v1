@@ -46,6 +46,13 @@ class Context {
       throw new Error('Context not initialized. Use run() to initialize the context.');
     }
   }
+
+  public clear(): void {
+    const store = this.asyncLocalStorage.getStore();
+    if (store) {
+      store.clear();
+    }
+  }
 }
 
 export default Context;
