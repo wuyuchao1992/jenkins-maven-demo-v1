@@ -1,44 +1,19 @@
-import { AsyncLocalStorage } from 'async_hooks';
+import { setWorldConstructor, World } from '@cucumber/cucumber';
 
-const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
-
-export async function runWithContext<T>(callback: () => Promise<T> | T): Promise<T> {
-  const store = new Map<string, any>();
-  return asyncLocalStorage.run(store, async () => {
-    return await callback();
-  });
+interface CustomWorld extends World {
+  dataCenter: Map<string, any>;
 }
 
-export function setContextValue(key: string, value: any): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.set(key, value);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
+class CustomWorldImpl implements CustomWorld {
+  dataCenter: Map<string, any>;
+
+  constructor() {
+    this.dataCenter = new Map();
   }
+
+  attach: World['attach'];
+  log: World['log'];
+  parameters: World['parameters'];
 }
 
-export function getContextValue(key: string): any {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    return store.get(key);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
-  }
-}
-
-export function deleteContextValue(key: string): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.delete(key);
-  } else {
-    throw new Error('Context not initialized. Use runWithContext() to initialize the context.');
-  }
-}
-
-export function clearContext(): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.clear();
-  }
-}
+setWorldConstructor(CustomWorldImpl);
