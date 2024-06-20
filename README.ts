@@ -5,8 +5,8 @@ for (let value of values) {
 }
 
 
-import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types';
-
+Before((scenario: ITestCaseHookParameter) => {
+    // 提取第一个以 @TEST 开头的标签
     const tag = scenario.pickle.tags.find(tag => /^@TEST/.test(tag.name));
     if (tag) {
         // 提取标签的后缀部分
