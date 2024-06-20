@@ -4,6 +4,9 @@ for (let value of values) {
     console.log(value);
 }
 
+
+import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types';
+
     const tag = scenario.pickle.tags.find(tag => /^@TEST/.test(tag.name));
     if (tag) {
         // 提取标签的后缀部分
