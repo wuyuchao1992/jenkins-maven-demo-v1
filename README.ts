@@ -1,13 +1,14 @@
-if (ulDivHandle) {
-  // 获取 div.ul.label 元素的 test-id 属性值
-  const labels = await ulDivHandle.evaluate(ulDiv => {
-    if (!ulDiv) {
-      return []; // 如果 ulDiv 为 null，则返回空数组
+if (button) {
+    // 找到按钮的父元素
+    const parent = await button.evaluateHandle(button => button.parentElement);
+    if (parent) {
+      // 在父元素内查找下拉菜单并提取label值
+      const labels = await parent.$$eval(".ev-dropdown__overlay label .ev-field__label", elements =>
+        elements.map(element => element.textContent)
+      );
+
+      // 打印每个label的值
+      labels.forEach(label => console.log(label));
+    } else {
+      console.error('未找到按钮的父元素');
     }
-    const labelElements = ulDiv.querySelectorAll('.label');
-    return Array.from(labelElements).map(label => label.getAttribute('test-id'));
-  });
-  console.log(labels);
-} else {
-  console.error('Could not find the div.ul element.');
-}
