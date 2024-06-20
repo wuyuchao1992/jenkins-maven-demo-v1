@@ -5,3 +5,11 @@ for (let value of values) {
 }
 
     const tag = scenario.pickle.tags.find(tag => /^@TEST/.test(tag.name));
+    if (tag) {
+        // 提取标签的后缀部分
+        const match = tag.name.match(/^@TEST-(\d+)$/);
+        if (match) {
+            tagSuffix = match[1];
+        }
+    }
+});
