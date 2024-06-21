@@ -11,6 +11,14 @@ function getRandomDateThisYear(): Date {
   return new Date(randomTime);
 }
 
-// 使用示例
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以需要加1
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+}
+
+// 使用示例并打印结果
 const randomDate = getRandomDateThisYear();
-console.log(randomDate);
+const formattedDate = formatDate(randomDate);
+console.log(`随机日期: ${formattedDate}`);
