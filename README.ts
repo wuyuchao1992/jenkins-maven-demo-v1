@@ -1,4 +1,4 @@
-function getRandomDateThisYear(): Date {
+function getRandomFormattedDateThisYear(): string {
   const now = new Date();
   const year = now.getFullYear();
 
@@ -8,17 +8,16 @@ function getRandomDateThisYear(): Date {
 
   // 生成当年的一个随机日期
   const randomTime = firstDayOfYear.getTime() + Math.random() * (lastDayOfYear.getTime() - firstDayOfYear.getTime());
-  return new Date(randomTime);
-}
+  const randomDate = new Date(randomTime);
 
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以需要加1
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
+  // 格式化日期为YYYYMMDD
+  const yearStr = randomDate.getFullYear();
+  const monthStr = String(randomDate.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以需要加1
+  const dayStr = String(randomDate.getDate()).padStart(2, '0');
+
+  return `${yearStr}${monthStr}${dayStr}`;
 }
 
 // 使用示例并打印结果
-const randomDate = getRandomDateThisYear();
-const formattedDate = formatDate(randomDate);
-console.log(`随机日期: ${formattedDate}`);
+const randomFormattedDate = getRandomFormattedDateThisYear();
+console.log(`随机日期: ${randomFormattedDate}`);
