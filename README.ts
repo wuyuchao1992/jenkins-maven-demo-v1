@@ -1,101 +1,108 @@
-### Collecting Steps in a Common Utility File and Calling Them in Step Definitions
+要在每一个步骤执行时自动高亮元素，可以通过在每个步骤定义中添加高亮功能，或者更优雅的方法是通过钩子（hooks）来实现。这里我们展示如何使用 Cucumber 的 hooks 在每个步骤前后进行元素高亮。
 
-To organize your step definitions better, you can collect common functionalities in a separate utility file and then call these functions from your step definition files. This approach promotes reusability and clean code structure.
+#### 一、创建高亮函数
 
-#### Step-by-Step Implementation
+首先，我们定义一个高亮元素的函数。将这个函数放在一个工具文件中，以便在其他地方使用。
 
-1. **Create a Utility File**
-   - Create a `src/utils/playwrightUtils.ts` file where you define all common functions.
+**src/utils/playwrightUtils.ts**：
+```typescript
+import { Page } from 'playwright';
 
-     ```typescript
-     import { chromium, Browser, Page } from 'playwright';
+export const highlightElement = async (page: Page, selector: string) => {
+  await page.evaluate((selector) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.style.outline = '2px solid red';
+    }
+  }, selector);
+};
+```
 
-     let browser: Browser;
-     let page: Page;
+#### 二、配置 Cucumber Hooks
 
-     export const launchBrowser = async () => {
-       browser = await chromium.launch();
-       page = await browser.newPage();
-       return page;
-     };
+接下来，我们在 Cucumber 的 hooks 中调用高亮函数。这可以确保每个步骤执行前后都会高亮相关元素。
 
-     export const closeBrowser = async () => {
-       await browser.close();
-     };
+**src/hooks.ts**：
+```typescript
+import { Before, After, BeforeStep, AfterStep } from '@cucumber/cucumber';
+import { highlightElement } from './utils/playwrightUtils';
+import { Page } from 'playwright';
 
-     export const goToPage = async (url: string) => {
-       await page.goto(url);
-     };
+Before(async function () {
+  this.context = {};
+  this.context.page = await this.browser.newPage();
+});
 
-     export const checkTitle = async (expectedTitle: string) => {
-       const title = await page.title();
-       if (title !== expectedTitle) {
-         throw new Error(`Expected title to be ${expectedTitle} but got ${title}`);
-       }
-     };
+BeforeStep(async function (scenario) {
+  const stepName = scenario.pickle.steps[scenario.pickle.steps.length - 1].text;
+  console.log(`Before step: ${stepName}`);
+  // Assuming you have a way to get the selector for the current step
+  const selector = this.context.currentSelector;
+  if (selector) {
+    await highlightElement(this.context.page, selector);
+  }
+});
 
-     // Add more common functions as needed
-     ```
+AfterStep(async function (scenario) {
+  const stepName = scenario.pickle.steps[scenario.pickle.steps.length - 1].text;
+  console.log(`After step: ${stepName}`);
+  // Assuming you have a way to get the selector for the current step
+  const selector = this.context.currentSelector;
+  if (selector) {
+    await highlightElement(this.context.page, selector);
+  }
+});
 
-2. **Import and Use Utility Functions in Step Definitions**
-   - In your step definition file (`src/steps/sample.steps.ts`), import and use the utility functions.
+After(async function () {
+  await this.context.page.close();
+});
+```
 
-     ```typescript
-     import { Given, Then } from '@cucumber/cucumber';
-     import { launchBrowser, closeBrowser, goToPage, checkTitle } from '../utils/playwrightUtils';
+#### 三、自定义 World 并使用 Hooks
 
-     Given('I open the Playwright website', async () => {
-       await launchBrowser();
-       await goToPage('https://playwright.dev/');
-     });
+为了能够在 hooks 中使用 `page` 对象，需要自定义 World 并在其中初始化 `page` 对象。
 
-     Then('the title should be {string}', async (expectedTitle: string) => {
-       await checkTitle(expectedTitle);
-       await closeBrowser();
-     });
-     ```
+**src/world.ts**：
+```typescript
+import { setWorldConstructor, World } from '@cucumber/cucumber';
+import { Browser, Page } from 'playwright';
 
-3. **Utility Functions Usage Example**
+class CustomWorld extends World {
+  browser: Browser;
+  page: Page;
+  context: any;
 
-   If you have more common steps, you can keep adding them to the `playwrightUtils.ts` file and use them across different step definition files as needed. For instance:
+  constructor(options) {
+    super(options);
+    this.browser = null;
+    this.page = null;
+    this.context = {};
+  }
+}
 
-   ```typescript
-   // In playwrightUtils.ts
-   export const clickElement = async (selector: string) => {
-     await page.click(selector);
-   };
+setWorldConstructor(CustomWorld);
+```
 
-   export const fillInput = async (selector: string, text: string) => {
-     await page.fill(selector, text);
-   };
+在步骤定义文件中，可以通过 `this.context.currentSelector` 来设置当前步骤要高亮的元素选择器。
 
-   // In another step definition file
-   import { Given, Then, When } from '@cucumber/cucumber';
-   import { launchBrowser, closeBrowser, goToPage, clickElement, fillInput } from '../utils/playwrightUtils';
+**src/steps/sample.steps.ts**：
+```typescript
+import { Given, Then } from '@cucumber/cucumber';
+import { launchBrowser, goToPage, checkTitle } from '../utils/playwrightUtils';
 
-   Given('I open the Playwright website', async () => {
-     await launchBrowser();
-     await goToPage('https://playwright.dev/');
-   });
+Given('I open the Playwright website', async function () {
+  this.browser = await launchBrowser();
+  this.context.page = await this.browser.newPage();
+  await goToPage('https://playwright.dev/');
+});
 
-   When('I click on the {string} button', async (buttonText: string) => {
-     await clickElement(`text=${buttonText}`);
-   });
+Then('the title should be {string}', async function (expectedTitle: string) {
+  this.context.currentSelector = 'title';  // 设置当前步骤要高亮的选择器
+  await checkTitle(expectedTitle);
+  await this.browser.close();
+});
+```
 
-   When('I fill the {string} input with {string}', async (inputName: string, text: string) => {
-     await fillInput(`input[name="${inputName}"]`, text);
-   });
+#### 结论
 
-   Then('the title should be {string}', async (expectedTitle: string) => {
-     await checkTitle(expectedTitle);
-     await closeBrowser();
-   });
-   ```
-
-#### Benefits of This Approach
-
-1. **Code Reusability**: Common functions are defined once and reused across multiple step definition files.
-2. **Clean Structure**: Separation of concerns makes the codebase more maintainable.
-3. **Readability**: Step definition files remain concise and focused on the test logic rather than the implementation details.
-
-By following this pattern, you can keep your codebase organized and scalable as your test suite grows.
+通过在 hooks 中调用高亮函数，可以确保每一个步骤执行前后都会高亮相关的元素。此方法利用 Cucumber 的钩子机制，在每个步骤之前和之后执行特定的代码，从而实现高亮效果。这种方式可以保持测试代码的清洁和模块化，同时增强调试的可视化效果。
