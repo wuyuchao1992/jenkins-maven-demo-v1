@@ -1,0 +1,35 @@
+<build>
+    <resources>
+        <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
+    <plugins>
+        <plugin>
+            <groupId>com.lazerycode.jmeter</groupId>
+            <artifactId>jmeter-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+                <execution>
+                    <id>jmeter-tests</id>
+                    <goals>
+                        <goal>jmeter</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <jmeterTestFilesIncluded>
+                    <jmeterTestFile>**/*.jmx</jmeterTestFile>
+                </jmeterTestFilesIncluded>
+                <propertiesUserPath>${project.basedir}/src/test/jmeter</propertiesUserPath>
+                <properties>
+                    <property>
+                        <name>my.param</name>
+                        <value>${MY_PARAM}</value>
+                    </property>
+                </properties>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
