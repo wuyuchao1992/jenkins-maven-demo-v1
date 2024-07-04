@@ -1,17 +1,14 @@
-// vars/readProperties.groovy
-def call(String propertiesFilePath) {
-    def props = new Properties()
-    def file = new File(propertiesFilePath)
-    if (file.exists()) {
-        file.withInputStream { stream -> props.load(stream) }
-    } else {
-        error "Properties file not found: ${propertiesFilePath}"
-    }
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.WebDriver;
 
-    // 打印读取的所有属性
-    props.each { key, value ->
-        echo "${key} = ${value}"
-    }
+ChromeOptions options = new ChromeOptions();
+options.addArguments("headless");
+options.addArguments("disable-gpu");
+options.addArguments("window-size=1920,1080");
 
-    return props
-}
+WDS.browser = new ChromeDriver(options);
+
+// 你的测试代码
+WDS.browser.get("https://example.com");
+WDS.log.info("Page title is: " + WDS.browser.getTitle());
