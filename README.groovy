@@ -1,14 +1,33 @@
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.WebDriver;
+const { Before, After } = require('@cucumber/cucumber');
+const playwright = require('playwright');
 
-ChromeOptions options = new ChromeOptions();
-options.addArguments("headless");
-options.addArguments("disable-gpu");
-options.addArguments("window-size=1920,1080");
+let browser;
+let browserType;
+let browserVersion;
+let browserExecutablePath;
 
-WDS.browser = new ChromeDriver(options);
+Before(async function () {
+  browserType = 'chromium'; // 这里可以更改为 'firefox' 或 'webkit'
+  const browserTypeInstance = playwright[browserType];
+  
+  // 获取浏览器的可执行文件路径
+  browserExecutablePath = browserTypeInstance.executablePath();
 
-// 你的测试代码
-WDS.browser.get("https://example.com");
-WDS.log.info("Page title is: " + WDS.browser.getTitle());
+  browser = await browserTypeInstance.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  // 获取浏览器版本信息
+  browserVersion = await page.evaluate(() => navigator.userAgent);
+
+  // 将浏览器和页面存储在全局变量中
+  global.browser = browser;
+  global.page = page;
+  global.browserExecutablePath = browserExecutablePath;
+});
+
+After(async function () {
+  await browser.close();
+});
+
+module.exports = { browserType, browserVersion, browserExecutablePath };
