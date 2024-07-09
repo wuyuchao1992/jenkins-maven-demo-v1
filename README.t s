@@ -1,14 +1,13 @@
 WDS.sampleResult.sampleStart()
 
 var driver = WDS.browser
-driver.manage().timeouts().implicitlyWait(java.time.Duration.ofSeconds(10)) // 设置隐式等待
-
 driver.get('http://www.example.com')
 
 // 定位输入框元素
 var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"))
 
-// 发送键值
-searchBox.sendKeys("123")
+// 使用Actions类模拟输入
+var actions = new org.openqa.selenium.interactions.Actions(driver)
+actions.click(searchBox).sendKeys("123").perform()
 
 WDS.sampleResult.sampleEnd()
