@@ -1,29 +1,16 @@
-import { Given, When, Then } from '@cucumber/cucumber';
-import { chromium, Browser, Page } from 'playwright';
+WDS.sampleResult.sampleStart()
 
-let browser: Browser;
-let page: Page;
+var driver = WDS.browser
+driver.get('http://www.google.com')
 
-Given('I am on the file upload page', async function() {
-  browser = await chromium.launch({ headless: false });
-  page = await browser.newPage();
-  await page.goto('https://your-upload-page-url.com');  // Replace with your URL
-});
+// 获取当前页面标题
+var pageTitle = driver.getTitle()
+WDS.log.info("Page Title: " + pageTitle)
 
-When('I upload a file', async function() {
-  const [fileChooser] = await Promise.all([
-    page.waitForEvent('filechooser'),
-    page.click('input[type="file"]') // Replace with your selector
-  ]);
+if (pageTitle === 'Google') {
+    WDS.log.info("Successfully navigated to the target page.")
+} else {
+    WDS.log.error("Failed to navigate to the target page.")
+}
 
-  await fileChooser.setFiles('path/to/your/file.txt');  // Replace with your file path
-});
-
-Then('I see the file uploaded successfully', async function() {
-  const successMessage = await page.locator('your-success-message-selector').textContent();  // Replace with your selector
-  if (successMessage !== 'Expected Success Message') {
-    throw new Error('File upload failed');
-  }
-
-  await browser.close();
-});
+WDS.sampleResult.sampleEnd()
