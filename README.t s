@@ -1,16 +1,14 @@
 WDS.sampleResult.sampleStart()
 
 var driver = WDS.browser
-driver.get('http://www.google.com')
+driver.manage().timeouts().implicitlyWait(java.time.Duration.ofSeconds(10)) // 设置隐式等待
 
-// 获取当前页面标题
-var pageTitle = driver.getTitle()
-WDS.log.info("Page Title: " + pageTitle)
+driver.get('http://www.example.com')
 
-if (pageTitle === 'Google') {
-    WDS.log.info("Successfully navigated to the target page.")
-} else {
-    WDS.log.error("Failed to navigate to the target page.")
-}
+// 定位输入框元素
+var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"))
+
+// 发送键值
+searchBox.sendKeys("123")
 
 WDS.sampleResult.sampleEnd()
