@@ -1,13 +1,35 @@
 WDS.sampleResult.sampleStart()
 
 var driver = WDS.browser
+
+// 设置token
+var token = "your_token_here"
+
+// 使用JavaScript设置token到localStorage
+driver.executeScript("window.localStorage.setItem('authToken', arguments[0]);", token)
+WDS.log.info("Token has been set in localStorage.")
+
+// 使用JavaScript设置token到sessionStorage（如果需要）
+driver.executeScript("window.sessionStorage.setItem('authToken', arguments[0]);", token)
+WDS.log.info("Token has been set in sessionStorage.")
+
+// 使用JavaScript设置cookie（如果需要）
+driver.executeScript("document.cookie = 'authToken=' + arguments[0];", token)
+WDS.log.info("Token has been set as cookie.")
+
+// 导航到目标页面
 driver.get('http://www.example.com')
 
-// 定位输入框元素
-var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"))
-
-// 使用Actions类模拟输入
-var actions = new org.openqa.selenium.interactions.Actions(driver)
-actions.click(searchBox).sendKeys("123").perform()
+// 验证是否成功登录（通过检查页面的某个元素）
+try {
+    var userElement = driver.findElement(org.openqa.selenium.By.id("userProfile"))
+    if (userElement) {
+        WDS.log.info("Successfully logged in using token.")
+    } else {
+        WDS.log.error("Failed to find the user profile element. Login might have failed.")
+    }
+} catch (e) {
+    WDS.log.error("Element not found or other error: " + e)
+}
 
 WDS.sampleResult.sampleEnd()
