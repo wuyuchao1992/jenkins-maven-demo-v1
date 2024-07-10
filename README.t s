@@ -1,13 +1,71 @@
-WDS.sampleResult.sampleStart()
+这是 Groovy 脚本，常用于 JMeter 的 WebDriver Sampler 中编写 Selenium 脚本。JMeter 的 WebDriver Sampler 支持使用 Groovy 语言编写脚本，以便控制浏览器进行各种操作。下面是脚本中关键部分的详细解释：
 
-var driver = WDS.browser
-driver.get('http://www.example.com')
+```groovy
+// 导入Selenium相关类
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By;
 
-// 定位输入框元素
-var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"))
+// 获取WebDriver实例
+WDS.sampleResult.sampleStart();
+WebDriver driver = WDS.browser;
 
-// 使用Actions类模拟输入
-var actions = new org.openqa.selenium.interactions.Actions(driver)
-actions.click(searchBox).sendKeys("123").perform()
+// 导航到目标网站
+driver.get("https://www.example.com");
 
-WDS.sampleResult.sampleEnd()
+// 找到输入框元素并发送键
+WebElement inputField = driver.findElement(By.id("inputFieldId")); // 替换成实际的元素ID
+inputField.sendKeys("Test Input");
+
+// 可选：点击按钮或执行其他操作
+WebElement submitButton = driver.findElement(By.id("submitButtonId")); // 替换成实际的元素ID
+submitButton.click();
+
+// 结束取样
+WDS.sampleResult.sampleEnd();
+```
+
+解释：
+
+1. **导入Selenium相关类**：
+   ```groovy
+   import org.openqa.selenium.WebDriver;
+   import org.openqa.selenium.WebElement;
+   import org.openqa.selenium.By;
+   ```
+   导入 Selenium WebDriver 所需的类，以便在脚本中使用。
+
+2. **获取WebDriver实例**：
+   ```groovy
+   WDS.sampleResult.sampleStart();
+   WebDriver driver = WDS.browser;
+   ```
+   `WDS.sampleResult.sampleStart()` 用于开始记录取样结果，`WDS.browser` 提供了 WebDriver 的实例，允许你控制浏览器。
+
+3. **导航到目标网站**：
+   ```groovy
+   driver.get("https://www.example.com");
+   ```
+   让浏览器导航到指定的网站。
+
+4. **找到输入框元素并发送键**：
+   ```groovy
+   WebElement inputField = driver.findElement(By.id("inputFieldId")); // 替换成实际的元素ID
+   inputField.sendKeys("Test Input");
+   ```
+   使用 `findElement` 方法找到网页中的输入框元素，并使用 `sendKeys` 方法向该元素输入文本。
+
+5. **可选：点击按钮或执行其他操作**：
+   ```groovy
+   WebElement submitButton = driver.findElement(By.id("submitButtonId")); // 替换成实际的元素ID
+   submitButton.click();
+   ```
+   这一步是可选的，示例中是点击一个按钮。
+
+6. **结束取样**：
+   ```groovy
+   WDS.sampleResult.sampleEnd();
+   ```
+   `WDS.sampleResult.sampleEnd()` 用于结束取样并记录结果。
+
+通过这种方式，你可以在 JMeter 的 WebDriver Sampler 中编写 Groovy 脚本，控制 Selenium WebDriver 执行各种浏览器操作。
