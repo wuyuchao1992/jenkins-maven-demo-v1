@@ -1,5 +1,18 @@
-   for (var i = 0; i < cookies.length; i++) {
-        var cookie = new org.openqa.selenium.Cookie.Builder(cookies[i].name, cookies[i].value)
-                        .build();
-        driver.manage().addCookie(cookie);
-    }
+from seleniumwire import webdriver  # Import from seleniumwire
+
+# Create a new instance of the Chrome driver
+driver = webdriver.Chrome()
+
+# Define the token
+token = "your_token_here"
+
+# Set the header
+driver.request_interceptor = lambda request: request.headers.update({'Authorization': f'Bearer {token}'})
+
+# Navigate to a page
+driver.get('http://example.com')
+
+# Perform interactions here
+
+# Quit the driver
+driver.quit()
