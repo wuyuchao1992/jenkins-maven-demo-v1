@@ -1,45 +1,16 @@
-var pkg = JavaImporter(org.openqa.selenium, org.openqa.selenium.chrome, org.openqa.selenium.chrome.ChromeDriver);
-
-var driverPath = "path/to/chromedriver"; // 替换为实际的 chromedriver 路径
-System.setProperty("webdriver.chrome.driver", driverPath);
-
-var options = new pkg.chrome.ChromeOptions();
-var driver = new pkg.chrome.ChromeDriver(options);
-var jsExecutor = driver;
-
-// 打开目标网页
-driver.get("http://example.com");
-
-// 注入 JavaScript 代码以拦截 API 请求并测量响应时间
-var script = `
-    window.responseTime = 0;
-    const apiUrl = '/api/v1/resource'; // 替换为实际的 API 路径
-    const originalFetch = window.fetch;
-    window.fetch = async function(...args) {
-        if (args[0].includes(apiUrl)) {
-            const startTime = performance.now();
-            const response = await originalFetch(...args);
-            const endTime = performance.now();
-            window.responseTime = endTime - startTime;
-            console.log("Response Time for API: " + window.responseTime + " ms");
-            return response;
-        } else {
-            return originalFetch(...args);
-        }
-    };
-`;
-
-jsExecutor.executeScript(script);
-
-// 执行某个动作，例如点击一个按钮
-driver.findElement(pkg.By.id("button_id")).click();
-
-// 等待响应，必要时可以增加等待时间或更复杂的等待条件
-java.lang.Thread.sleep(5000); // 替换为适当的等待时间
-
-// 获取响应时间并传递给 JMeter 变量
-var responseTime = jsExecutor.executeScript("return window.responseTime;");
-vars.put("responseTime", responseTime.toString());
-
-// 关闭浏览器
-driver.quit();
+var script = 
+    "window.responseTime = 0;" +
+    "const apiUrl = '/api/v1/resource';" + // 替换为实际的 API 路径
+    "const originalFetch = window.fetch;" +
+    "window.fetch = async function(...args) {" +
+    "    if (args[0].includes(apiUrl)) {" +
+    "        const startTime = performance.now();" +
+    "        const response = await originalFetch(...args);" +
+    "        const endTime = performance.now();" +
+    "        window.responseTime = endTime - startTime;" +
+    "        console.log('Response Time for API: ' + window.responseTime + ' ms');" +
+    "        return response;" +
+    "    } else {" +
+    "        return originalFetch(...args);" +
+    "    }" +
+    "};";
