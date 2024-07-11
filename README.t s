@@ -16,3 +16,29 @@ driver.get('http://example.com')
 
 # Quit the driver
 driver.quit()
+
+
+
+// Import necessary classes
+var webdriver = JavaImporter(org.openqa.selenium, org.openqa.selenium.support.ui);
+var seleniumwire = JavaImporter(com.seleniumwire);
+
+// Create a new instance of the Chrome driver with Selenium Wire
+var options = new org.openqa.selenium.chrome.ChromeOptions();
+var driver = new seleniumwire.SeleniumWireDriver(options);
+
+// Define the token
+var token = "your_token_here";
+
+// Set up request interceptor to add custom headers
+driver.getWire().request_interceptor = function (request) {
+    request.addHeader('Authorization', 'Bearer ' + token);
+};
+
+// Navigate to a page
+driver.get('http://example.com');
+
+// Perform interactions here
+
+// Quit the driver
+driver.quit();
