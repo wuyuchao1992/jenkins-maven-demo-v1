@@ -3,32 +3,34 @@ var script =
     "try { " +
     "   var performance = window.performance || window.msPerformance || window.webkitPerformance || {}; " +
     "   var entries = performance.getEntries() || []; " +
-    "   return entries.map(function(entry) { " +
-    "       return { " +
-    "           name: entry.name, " +
-    "           duration: entry.duration, " +
-    "           entryType: entry.entryType " +
-    "       }; " +
-    "   }); " +
+    "   return { " +
+    "       entries: entries.map(function(entry) { " +
+    "           return { " +
+    "               name: entry.name, " +
+    "               duration: entry.duration, " +
+    "               entryType: entry.entryType " +
+    "           }; " +
+    "       }) " +
+    "   }; " +
     "} catch (e) { " +
-    "   return 'Error: ' + e.message; " +
+    "   return { error: 'Error: ' + e.message }; " +
     "}";
 
 try {
     var response = WDS.browser.executeScript(script);
 
-    // 检查 response 的类型
+    // 检查 response 的结构
     WDS.log.info("Response Type: " + typeof response);
     WDS.log.info("Response: " + JSON.stringify(response));
 
-    if (typeof response === 'string' && response.startsWith('Error:')) {
-        WDS.log.error("JavaScript execution error: " + response);
-    } else if (Array.isArray(response)) {
-        WDS.log.info("All Performance Entries: " + JSON.stringify(response));
+    if (response.error) {
+        WDS.log.error("JavaScript execution error: " + response.error);
+    } else if (response.entries) {
+        WDS.log.info("All Performance Entries: " + JSON.stringify(response.entries));
 
         // 过滤和记录请求时间
         var totalDuration = 0;
-        var filteredEntries = response.filter(function(entry) { return entry.name.includes('api/endpoint'); });
+        var filteredEntries = response.entries.filter(function(entry) { return entry.name.includes('api/endpoint'); });
         WDS.log.info("Filtered Entries: " + JSON.stringify(filteredEntries));
         if (filteredEntries.length > 0) {
             filteredEntries.forEach(function(entry) {
@@ -41,7 +43,7 @@ try {
         // 打印 totalDuration 到日志
         WDS.log.info("Total Duration: " + totalDuration + "ms");
     } else {
-        WDS.log.error("Unexpected response type. Expected an array but got: " + typeof response);
+        WDS.log.error("Unexpected response structure.");
     }
 } catch (e) {
     WDS.log.error("Error executing script: " + e);
