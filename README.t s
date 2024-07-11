@@ -1,7 +1,26 @@
-// 注入到 localStorage
-var scriptLocalStorage = "window.localStorage.setItem('token', arguments[0]);"
-driver.executeScript(scriptLocalStorage, token)
+// 注入 JavaScript 捕获网络请求时间
+var script = `
+    var performance = window.performance || window.msPerformance || window.webkitPerformance || {};
+    var entries = performance.getEntries() || [];
+    var filteredEntries = entries.filter(entry => entry.name.includes('api/endpoint'));
+    return filteredEntries.map(entry => ({
+        name: entry.name,
+        duration: entry.duration
+    }));
+`;
+var response = WDS.browser.executeScript(script);
 
-// 或者，注入到 sessionStorage
-// var scriptSessionStorage = "window.sessionStorage.setItem('token', arguments[0]);"
-// driver.executeScript(scriptSessionStorage, token)
+// 记录请求时间
+var totalDuration = 0;
+if (response && response.length) {
+    response.forEach(function(entry) {
+        totalDuration += entry.duration;
+    });
+}
+
+// 将总持续时间传递给 JMeter
+WDS.sampleResult.setResponseCode("200");
+WDS.sampleResult.setResponseMessage("OK");
+WDS.sampleResult.setSuccessful(true);
+WDS.sampleResult.setResponseData("Total Duration: " + totalDuration + "ms", "UTF-8");
+WDS.sampleResult.setTime(totalDuration);
