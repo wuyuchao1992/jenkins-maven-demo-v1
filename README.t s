@@ -16,27 +16,32 @@ var script =
 
 try {
     var response = WDS.browser.executeScript(script);
+
+    // 检查 response 的类型
+    WDS.log.info("Response Type: " + typeof response);
+    WDS.log.info("Response: " + JSON.stringify(response));
+
     if (typeof response === 'string' && response.startsWith('Error:')) {
         WDS.log.error("JavaScript execution error: " + response);
-    } else {
+    } else if (Array.isArray(response)) {
         WDS.log.info("All Performance Entries: " + JSON.stringify(response));
 
         // 过滤和记录请求时间
         var totalDuration = 0;
-        if (response && response.length) {
-            var filteredEntries = response.filter(function(entry) { return entry.name.includes('api/endpoint'); });
-            WDS.log.info("Filtered Entries: " + JSON.stringify(filteredEntries));
-            if (filteredEntries.length > 0) {
-                filteredEntries.forEach(function(entry) {
-                    totalDuration += entry.duration;
-                });
-            } else {
-                WDS.log.info("No matching entries found after filtering.");
-            }
+        var filteredEntries = response.filter(function(entry) { return entry.name.includes('api/endpoint'); });
+        WDS.log.info("Filtered Entries: " + JSON.stringify(filteredEntries));
+        if (filteredEntries.length > 0) {
+            filteredEntries.forEach(function(entry) {
+                totalDuration += entry.duration;
+            });
+        } else {
+            WDS.log.info("No matching entries found after filtering.");
         }
 
         // 打印 totalDuration 到日志
         WDS.log.info("Total Duration: " + totalDuration + "ms");
+    } else {
+        WDS.log.error("Unexpected response type. Expected an array but got: " + typeof response);
     }
 } catch (e) {
     WDS.log.error("Error executing script: " + e);
