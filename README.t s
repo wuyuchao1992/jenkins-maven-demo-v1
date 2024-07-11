@@ -1,6 +1,5 @@
-
-    // Set a cookie
-    driver.manage().addCookie(new org.openqa.selenium.Cookie("name", "value"));
-
-    // Refresh the page
-    driver.navigate().refresh();
+   for (var i = 0; i < cookies.length; i++) {
+        var cookie = new org.openqa.selenium.Cookie.Builder(cookies[i].name, cookies[i].value)
+                        .build();
+        driver.manage().addCookie(cookie);
+    }
