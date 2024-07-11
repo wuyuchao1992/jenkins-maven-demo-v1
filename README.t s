@@ -1,35 +1,17 @@
-import java.util.Timer;
-import java.util.TimerTask;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 
-public class MethodExecutor {
-
-    // 要多次执行的方法
-    public static void executeMethod() {
-        System.out.println("Executing method...");
-    }
-
+public class AddCookies {
     public static void main(String[] args) {
-        // 创建 Timer
-        Timer timer = new Timer();
-
-        // 定义执行次数
-        int numberOfTimes = 5;
-        long delay = 0; // 开始前的延迟
-        long period = 1000; // 每次执行的时间间隔，单位毫秒
-
-        // 使用 Timer 执行方法
-        timer.scheduleAtFixedRate(new TimerTask() {
-            int count = 0;
-
-            @Override
-            public void run() {
-                if (count < numberOfTimes) {
-                    executeMethod();
-                    count++;
-                } else {
-                    timer.cancel();
-                }
-            }
-        }, delay, period);
+        WebDriver driver = new ChromeDriver();
+        driver.get("https://your-website.com");
+        
+        // 添加Cookie
+        Cookie cookie = new Cookie("name", "value");
+        driver.manage().addCookie(cookie);
+        
+        // 重新加载页面以使用新的Cookie
+        driver.navigate().refresh();
     }
 }
