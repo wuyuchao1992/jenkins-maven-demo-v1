@@ -1,17 +1,6 @@
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 
-public class AddCookies {
-    public static void main(String[] args) {
-        WebDriver driver = new ChromeDriver();
-        driver.get("https://your-website.com");
-        
-        // 添加Cookie
-        Cookie cookie = new Cookie("name", "value");
-        driver.manage().addCookie(cookie);
-        
-        // 重新加载页面以使用新的Cookie
-        driver.navigate().refresh();
-    }
-}
+    // Set a cookie
+    driver.manage().addCookie(new org.openqa.selenium.Cookie("name", "value"));
+
+    // Refresh the page
+    driver.navigate().refresh();
