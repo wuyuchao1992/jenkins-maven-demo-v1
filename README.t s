@@ -1,12 +1,8 @@
-// 打印 totalDuration 到日志
-WDS.log.info("Total Duration: " + totalDuration + "ms");
-
-// 设置采样结果
-WDS.sampleResult.setSuccessful(true);
-WDS.sampleResult.setResponseCode("200");
-WDS.sampleResult.setResponseMessage("OK");
-WDS.sampleResult.setResponseData("Total Duration: " + totalDuration + "ms", "UTF-8");
-
-// 设置采样持续时间
-WDS.sampleResult.setEndTime(WDS.sampleResult.getStartTime() + totalDuration);
-WDS.sampleResult.setTime(totalDuration);
+var script = 
+    "var performance = window.performance || window.msPerformance || window.webkitPerformance || {}; " +
+    "var entries = performance.getEntries() || []; " +
+    "var filteredEntries = entries.filter(entry => entry.name.includes('api/endpoint')); " +
+    "return filteredEntries.map(entry => ({ " +
+    "    name: entry.name, " +
+    "    duration: entry.duration " +
+    "}));";
