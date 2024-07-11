@@ -1,26 +1,7 @@
-// 导入必要的类
-var { By, until, Builder } = JavaImporter(org.openqa.selenium);
-var { Network } = JavaImporter(org.openqa.selenium.devtools.v106.network);
-var { Headers } = JavaImporter(org.openqa.selenium.devtools.v106.network.model);
+English Proficiency: The candidate's English communication skills are average. They can handle basic conversations but struggle with complex or highly technical discussions.
 
-// 启动采样
-WDS.sampleResult.sampleStart();
+Automation Knowledge: The candidate has a basic understanding of automation concepts but shows a lack of depth in breaking down automation steps and applying this knowledge practically.
 
-// 获取DevTools对象
-var chromeDevTools = WDS.browser.getDevTools();
-chromeDevTools.createSession();
+Performance Testing: The candidate has some foundational knowledge of performance testing, but their understanding and ability to apply advanced performance testing techniques and optimizations are limited.
 
-// 启用Network域
-chromeDevTools.send(Network.enable(null, null, null));
-
-// 导航到目标页面
-WDS.browser.get('http://example.com');
-
-// 创建并设置请求头
-var headers = new java.util.HashMap();
-var auth = 'Bearer ' + vars.get('variable-from-your-csv-file');
-headers.put("Authorization", auth);
-chromeDevTools.send(Network.setExtraHTTPHeaders(new Headers(headers)));
-
-// 结束采样
-WDS.sampleResult.sampleEnd();
+JAVA Proficiency: The candidate is not very familiar with the JAVA programming language and lacks the necessary experience and skills, which could impact their performance in a technical role.
