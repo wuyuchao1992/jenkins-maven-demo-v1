@@ -1,6 +1,43 @@
+// 注入 JavaScript 捕获网络请求时间
+var script = 
+    "try { " +
+    "   var performance = window.performance || window.msPerformance || window.webkitPerformance || {}; " +
+    "   var entries = performance.getEntries() || []; " +
+    "   return entries.map(function(entry) { " +
+    "       return { " +
+    "           name: entry.name, " +
+    "           duration: entry.duration, " +
+    "           entryType: entry.entryType " +
+    "       }; " +
+    "   }); " +
+    "} catch (e) { " +
+    "   return 'Error: ' + e.message; " +
+    "}";
+
 try {
     var response = WDS.browser.executeScript(script);
-    WDS.log.info("All Performance Entries: " + JSON.stringify(response));
+    if (typeof response === 'string' && response.startsWith('Error:')) {
+        WDS.log.error("JavaScript execution error: " + response);
+    } else {
+        WDS.log.info("All Performance Entries: " + JSON.stringify(response));
+
+        // 过滤和记录请求时间
+        var totalDuration = 0;
+        if (response && response.length) {
+            var filteredEntries = response.filter(function(entry) { return entry.name.includes('api/endpoint'); });
+            WDS.log.info("Filtered Entries: " + JSON.stringify(filteredEntries));
+            if (filteredEntries.length > 0) {
+                filteredEntries.forEach(function(entry) {
+                    totalDuration += entry.duration;
+                });
+            } else {
+                WDS.log.info("No matching entries found after filtering.");
+            }
+        }
+
+        // 打印 totalDuration 到日志
+        WDS.log.info("Total Duration: " + totalDuration + "ms");
+    }
 } catch (e) {
     WDS.log.error("Error executing script: " + e);
 }
