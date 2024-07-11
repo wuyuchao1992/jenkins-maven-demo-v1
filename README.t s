@@ -1,44 +1,26 @@
-from seleniumwire import webdriver  # Import from seleniumwire
+// 导入必要的类
+var { By, until, Builder } = JavaImporter(org.openqa.selenium);
+var { Network } = JavaImporter(org.openqa.selenium.devtools.v106.network);
+var { Headers } = JavaImporter(org.openqa.selenium.devtools.v106.network.model);
 
-# Create a new instance of the Chrome driver
-driver = webdriver.Chrome()
+// 启动采样
+WDS.sampleResult.sampleStart();
 
-# Define the token
-token = "your_token_here"
+// 获取DevTools对象
+var chromeDevTools = WDS.browser.getDevTools();
+chromeDevTools.createSession();
 
-# Set the header
-driver.request_interceptor = lambda request: request.headers.update({'Authorization': f'Bearer {token}'})
+// 启用Network域
+chromeDevTools.send(Network.enable(null, null, null));
 
-# Navigate to a page
-driver.get('http://example.com')
+// 导航到目标页面
+WDS.browser.get('http://example.com');
 
-# Perform interactions here
+// 创建并设置请求头
+var headers = new java.util.HashMap();
+var auth = 'Bearer ' + vars.get('variable-from-your-csv-file');
+headers.put("Authorization", auth);
+chromeDevTools.send(Network.setExtraHTTPHeaders(new Headers(headers)));
 
-# Quit the driver
-driver.quit()
-
-
-
-// Import necessary classes
-var webdriver = JavaImporter(org.openqa.selenium, org.openqa.selenium.support.ui);
-var seleniumwire = JavaImporter(com.seleniumwire);
-
-// Create a new instance of the Chrome driver with Selenium Wire
-var options = new org.openqa.selenium.chrome.ChromeOptions();
-var driver = new seleniumwire.SeleniumWireDriver(options);
-
-// Define the token
-var token = "your_token_here";
-
-// Set up request interceptor to add custom headers
-driver.getWire().request_interceptor = function (request) {
-    request.addHeader('Authorization', 'Bearer ' + token);
-};
-
-// Navigate to a page
-driver.get('http://example.com');
-
-// Perform interactions here
-
-// Quit the driver
-driver.quit();
+// 结束采样
+WDS.sampleResult.sampleEnd();
