@@ -1,3 +1,7 @@
-var token = 'your_token_value'
-var cookie = new org.openqa.selenium.Cookie('token', token, '.example.com', '/', null)
-driver.manage().addCookie(cookie)
+// 注入到 localStorage
+var scriptLocalStorage = "window.localStorage.setItem('token', arguments[0]);"
+driver.executeScript(scriptLocalStorage, token)
+
+// 或者，注入到 sessionStorage
+// var scriptSessionStorage = "window.sessionStorage.setItem('token', arguments[0]);"
+// driver.executeScript(scriptSessionStorage, token)
