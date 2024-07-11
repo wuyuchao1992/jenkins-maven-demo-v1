@@ -1,1 +1,3 @@
-driver.executeScript("document.cookie = 'token=' + arguments[0] + '; path=/';", token);
+var token = 'your_token_value'
+var cookie = new org.openqa.selenium.Cookie('token', token, '.example.com', '/', null)
+driver.manage().addCookie(cookie)
