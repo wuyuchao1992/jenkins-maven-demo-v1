@@ -1,16 +1,66 @@
-var script = 
-    "window.responseTime = 0;" +
-    "const apiUrl = '/api/v1/resource';" + // 替换为实际的 API 路径
-    "const originalFetch = window.fetch;" +
-    "window.fetch = async function(...args) {" +
-    "    if (args[0].includes(apiUrl)) {" +
-    "        const startTime = performance.now();" +
-    "        const response = await originalFetch(...args);" +
-    "        const endTime = performance.now();" +
-    "        window.responseTime = endTime - startTime;" +
-    "        console.log('Response Time for API: ' + window.responseTime + ' ms');" +
-    "        return response;" +
-    "    } else {" +
-    "        return originalFetch(...args);" +
-    "    }" +
-    "};";
+要在使用 `yum` 的系统上（如 CentOS 或旧版本的 Fedora）安装 Google Chrome，可以按照以下步骤操作：
+
+### 1. 添加 Google Chrome 的官方存储库
+首先，创建一个新的存储库文件：
+
+```sh
+sudo nano /etc/yum.repos.d/google-chrome.repo
+```
+
+在文件中添加以下内容：
+
+```
+[google-chrome]
+name=google-chrome - $basearch
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+```
+
+保存并退出（按 `Ctrl+X`，然后按 `Y` 确认保存并按 `Enter`）。
+
+### 2. 安装 Google Chrome
+现在你可以使用 `yum` 来安装 Google Chrome：
+
+```sh
+sudo yum install google-chrome-stable
+```
+
+### 3. 启动 Google Chrome
+安装完成后，你可以通过命令行启动 Google Chrome：
+
+```sh
+google-chrome
+```
+
+或者通过桌面环境的应用程序菜单启动。
+
+### 示例流程
+以下是完整的命令流程：
+
+```sh
+# 创建并编辑存储库文件
+sudo nano /etc/yum.repos.d/google-chrome.repo
+
+# 在文件中添加存储库内容
+[google-chrome]
+name=google-chrome - $basearch
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+
+# 保存并退出编辑器
+
+# 更新 yum 存储库
+sudo yum update
+
+# 安装 Google Chrome
+sudo yum install google-chrome-stable
+
+# 启动 Google Chrome
+google-chrome
+```
+
+通过以上步骤，你就可以在使用 `yum` 的系统上安装并运行 Google Chrome 了。如果你使用的是较新的 Fedora 系统，请考虑使用 `dnf`，因为它是 `yum` 的继任者，具有更好的性能和更多的功能。
