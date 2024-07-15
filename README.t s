@@ -1,66 +1,122 @@
-要在使用 `yum` 的系统上（如 CentOS 或旧版本的 Fedora）安装 Google Chrome，可以按照以下步骤操作：
+在 Linux 上设置 Chrome 的环境变量，以便 WebDriver（例如 ChromeDriver）能够找到 Chrome 浏览器，可以通过配置环境变量或脚本来实现。以下是几种设置 Chrome 环境变量的方法：
 
-### 1. 添加 Google Chrome 的官方存储库
-首先，创建一个新的存储库文件：
+### 方法 1：临时设置环境变量
 
-```sh
-sudo nano /etc/yum.repos.d/google-chrome.repo
+这种方法适用于在当前终端会话中设置环境变量。
+
+1. 打开终端。
+2. 使用 `export` 命令设置 `CHROME_BIN` 环境变量：
+
+   ```sh
+   export CHROME_BIN=/usr/bin/google-chrome
+   ```
+
+3. 运行 JMeter 或其他需要使用该环境变量的命令：
+
+   ```sh
+   jmeter -n -t /path/to/test_plan.jmx -l /path/to/result.jtl
+   ```
+
+### 方法 2：永久设置环境变量
+
+这种方法适用于在所有终端会话中永久设置环境变量。
+
+1. 打开终端。
+2. 编辑 `~/.bashrc` 或 `~/.bash_profile` 文件（具体取决于您的 shell）：
+
+   ```sh
+   nano ~/.bashrc
+   ```
+
+3. 在文件末尾添加以下行：
+
+   ```sh
+   export CHROME_BIN=/usr/bin/google-chrome
+   ```
+
+4. 保存并关闭文件。
+5. 使更改生效：
+
+   ```sh
+   source ~/.bashrc
+   ```
+
+### 方法 3：在脚本中设置环境变量
+
+如果您希望在运行 JMeter 测试计划的脚本中设置环境变量，可以在脚本中添加 `export` 命令。
+
+1. 创建一个脚本文件，例如 `run_jmeter.sh`：
+
+   ```sh
+   nano run_jmeter.sh
+   ```
+
+2. 添加以下内容：
+
+   ```sh
+   #!/bin/bash
+   export CHROME_BIN=/usr/bin/google-chrome
+   jmeter -n -t /path/to/test_plan.jmx -l /path/to/result.jtl
+   ```
+
+3. 保存并关闭文件。
+4. 使脚本可执行：
+
+   ```sh
+   chmod +x run_jmeter.sh
+   ```
+
+5. 运行脚本：
+
+   ```sh
+   ./run_jmeter.sh
+   ```
+
+### 示例：在 JMeter WebDriver Sampler 中使用环境变量
+
+在 WebDriver Sampler 中，可以直接使用 JavaScript 访问环境变量。例如：
+
+```javascript
+// 导入所需的 Selenium 库
+var pkg = JavaImporter(org.openqa.selenium, org.openqa.selenium.chrome, org.openqa.selenium.By);
+
+// 开始采样
+WDS.sampleResult.sampleStart();
+
+// 获取环境变量
+var chromeBin = java.lang.System.getenv("CHROME_BIN");
+
+// 设置 ChromeDriver 路径
+java.lang.System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
+
+// 配置 Chrome 浏览器选项
+var options = new pkg.ChromeOptions();
+options.setBinary(chromeBin);  // 使用环境变量设置 Google Chrome 的路径
+options.addArguments("--headless");  // 可选：启用无头模式
+
+// 启动 ChromeDriver
+WDS.browser = new pkg.ChromeDriver(options);
+
+// 执行浏览器操作
+WDS.browser.get('https://www.google.com');
+var searchBox = WDS.browser.findElement(pkg.By.name('q'));
+searchBox.sendKeys('JMeter Selenium');
+searchBox.submit();
+
+// 显式等待搜索结果加载
+var wait = new pkg.WebDriverWait(WDS.browser, 10);
+wait.until(pkg.ExpectedConditions.presenceOfElementLocated(pkg.By.id('search')));
+
+// 设置全局字段
+var fieldName = "searchQuery";
+var fieldValue = "JMeter Selenium";
+props.put(fieldName, fieldValue);
+
+// 获取并打印全局字段
+var retrievedValue = props.get(fieldName);
+WDS.log.info("Retrieved global field value: " + retrievedValue);
+
+WDS.sampleResult.sampleEnd();
 ```
 
-在文件中添加以下内容：
-
-```
-[google-chrome]
-name=google-chrome - $basearch
-baseurl=https://dl.google.com/linux/chrome/rpm/stable/$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl.google.com/linux/linux_signing_key.pub
-```
-
-保存并退出（按 `Ctrl+X`，然后按 `Y` 确认保存并按 `Enter`）。
-
-### 2. 安装 Google Chrome
-现在你可以使用 `yum` 来安装 Google Chrome：
-
-```sh
-sudo yum install google-chrome-stable
-```
-
-### 3. 启动 Google Chrome
-安装完成后，你可以通过命令行启动 Google Chrome：
-
-```sh
-google-chrome
-```
-
-或者通过桌面环境的应用程序菜单启动。
-
-### 示例流程
-以下是完整的命令流程：
-
-```sh
-# 创建并编辑存储库文件
-sudo nano /etc/yum.repos.d/google-chrome.repo
-
-# 在文件中添加存储库内容
-[google-chrome]
-name=google-chrome - $basearch
-baseurl=https://dl.google.com/linux/chrome/rpm/stable/$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl.google.com/linux/linux_signing_key.pub
-
-# 保存并退出编辑器
-
-# 更新 yum 存储库
-sudo yum update
-
-# 安装 Google Chrome
-sudo yum install google-chrome-stable
-
-# 启动 Google Chrome
-google-chrome
-```
-
-通过以上步骤，你就可以在使用 `yum` 的系统上安装并运行 Google Chrome 了。如果你使用的是较新的 Fedora 系统，请考虑使用 `dnf`，因为它是 `yum` 的继任者，具有更好的性能和更多的功能。
+通过这些方法，您可以设置和使用 Chrome 环境变量，使 WebDriver 能够找到并正确使用 Chrome 浏览器。
