@@ -6,8 +6,13 @@ driver.get('http://www.example.com');
 // 定位输入框元素
 var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"));
 
-// 直接设置输入框的值
-var jsExecutor = driver;
-jsExecutor.executeScript("arguments[0].value='123';", searchBox);
+// 要输入的字符串
+var inputString = "123";
+
+// 使用循环逐个字符发送
+for (var i = 0; i < inputString.length; i++) {
+    var character = inputString.charAt(i);
+    searchBox.sendKeys(character);
+}
 
 WDS.sampleResult.sampleEnd();
