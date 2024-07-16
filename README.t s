@@ -1,40 +1,13 @@
-// 导入所需的 Selenium 库
-var pkg = JavaImporter(org.openqa.selenium, org.openqa.selenium.chrome, org.openqa.selenium.By);
-
-// 开始采样
 WDS.sampleResult.sampleStart();
 
-// 获取环境变量
-var chromeBin = java.lang.System.getenv("CHROME_BIN");
+var driver = WDS.browser;
+driver.get('http://www.example.com');
 
-// 设置 ChromeDriver 路径
-java.lang.System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
+// 定位输入框元素
+var searchBox = driver.findElement(org.openqa.selenium.By.xpath("//input[@name='q']"));
 
-// 配置 Chrome 浏览器选项
-var options = new pkg.ChromeOptions();
-options.setBinary(chromeBin);  // 使用环境变量设置 Google Chrome 的路径
-options.addArguments("--headless");  // 可选：启用无头模式
-
-// 启动 ChromeDriver
-WDS.browser = new pkg.ChromeDriver(options);
-
-// 执行浏览器操作
-WDS.browser.get('https://www.google.com');
-var searchBox = WDS.browser.findElement(pkg.By.name('q'));
-searchBox.sendKeys('JMeter Selenium');
-searchBox.submit();
-
-// 显式等待搜索结果加载
-var wait = new pkg.WebDriverWait(WDS.browser, 10);
-wait.until(pkg.ExpectedConditions.presenceOfElementLocated(pkg.By.id('search')));
-
-// 设置全局字段
-var fieldName = "searchQuery";
-var fieldValue = "JMeter Selenium";
-props.put(fieldName, fieldValue);
-
-// 获取并打印全局字段
-var retrievedValue = props.get(fieldName);
-WDS.log.info("Retrieved global field value: " + retrievedValue);
+// 直接设置输入框的值
+var jsExecutor = driver;
+jsExecutor.executeScript("arguments[0].value='123';", searchBox);
 
 WDS.sampleResult.sampleEnd();
