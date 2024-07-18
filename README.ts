@@ -1,22 +1,8 @@
-Feature: Update object with multiple fields
 
-  Scenario: Printing key-value pairs
-    Given I have the following key-value pairs:
-      | key                      | value                     |
-      | user.name                | Jane Doe                  |
-      | user.address.city        | Los Angeles               |
-      | user.posts[0].title      | Welcome to the blog       |
-
-
-
-      Given('I have the following key-value pairs:', function (this: any, dataTable: DataTable) {
-  const fieldsToUpdate: Record<string, string> = {};
-
-  const rawTable = dataTable.raw().slice(1);
-
-  rawTable.forEach(([key, value]) => {
-    fieldsToUpdate[key] = value;
+// 函数处理键值对
+function processKeyValuePairs(fields: { [key: string]: any }, defaultValue: any = null) {
+  Object.keys(fields).forEach(key => {
+    const value = (Object.keys(fields[key]).length === 0 && fields[key].constructor === Object) ? defaultValue : fields[key];
+    set(obj, key, value);
   });
-
-  console.log('Fields to Update:', fieldsToUpdate);
-});
+}
