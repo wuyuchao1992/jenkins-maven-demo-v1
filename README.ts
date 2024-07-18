@@ -1,12 +1,12 @@
-import { Given } from '@cucumber/cucumber';
-
 Given('I have the following key-value pairs:', function (dataTable) {
-  const fieldsToPrint: Record<string, any> = {};
-  dataTable.rawTable.slice(1).forEach(([key, value]) => {
-    fieldsToPrint[key] = value;
+  const fieldsToUpdate: Record<string, string> = {};
+
+  // Ensure TypeScript knows the structure of rawTable
+  const rawTable: [string, string][] = dataTable.rawTable.slice(1);
+
+  rawTable.forEach(([key, value]) => {
+    fieldsToUpdate[key] = value;
   });
-  console.log('Key-Value Pairs:');
-  for (const [key, value] of Object.entries(fieldsToPrint)) {
-    console.log(`Key: ${key}, Value: ${value}`);
-  }
+
+  console.log('Fields to Update:', fieldsToUpdate);
 });
