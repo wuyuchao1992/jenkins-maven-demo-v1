@@ -1,8 +1,10 @@
-
-// 函数处理键值对
-function processKeyValuePairs(fields: { [key: string]: any }, defaultValue: any = null) {
+function processKeyValuePairs(fields: { [key: string]: any }) {
   Object.keys(fields).forEach(key => {
-    const value = (Object.keys(fields[key]).length === 0 && fields[key].constructor === Object) ? defaultValue : fields[key];
-    set(obj, key, value);
+    // 如果字段是一个空对象，则设置为空字符串
+    if (Object.keys(fields[key]).length === 0 && fields[key].constructor === Object) {
+      set(obj, key, '');
+    } else {
+      set(obj, key, fields[key]);
+    }
   });
 }
