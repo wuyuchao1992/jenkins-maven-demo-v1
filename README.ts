@@ -1,4 +1,5 @@
-Given('I have the following key-value pairs:', function (dataTable) {
+// Define the Given step with correct function signature
+Given('I have the following key-value pairs:', function (dataTable: DataTable) {
   const fieldsToUpdate: Record<string, string> = {};
 
   // Ensure TypeScript knows the structure of rawTable
@@ -7,6 +8,3 @@ Given('I have the following key-value pairs:', function (dataTable) {
   rawTable.forEach(([key, value]) => {
     fieldsToUpdate[key] = value;
   });
-
-  console.log('Fields to Update:', fieldsToUpdate);
-});
