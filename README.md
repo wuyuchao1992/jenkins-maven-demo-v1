@@ -48,4 +48,10 @@ Once the backend completes the suggested optimizations, further stress testing w
 
 ---
 
+
+Execution Machine Performance
+The following charts show the CPU, memory, and disk usage on the machine executing the tests during the test period.
+
+
+
 **Note**: This report serves as a record of preliminary exploratory testing results. Subsequent tests will be adjusted and supplemented based on optimization outcomes.
