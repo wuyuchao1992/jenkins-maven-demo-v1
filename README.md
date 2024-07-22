@@ -1,12 +1,66 @@
-Dear [Leader's Name],
+import { Client } from 'pg';
 
-As discussed previously, we needed to conduct a performance test on the front-end. I am now sharing the results of our recent performance test using JMeter and the Selenium plugin.
+interface DbConfig {
+  user: string;
+  host: string;
+  database: string;
+  password: string;
+  port: number;
+}
 
-Key Findings:
-Current Database Records: Approximately 3600 records
-Key Observation: When the database records exceed 50,000, API response times significantly slow down.
-For the detailed report, please refer to the following link: Performance Test Report.
+class Database {
+  private config: DbConfig;
 
-If you have any questions or need further details, please let me know.
+  constructor(config: DbConfig) {
+    this.config = config;
+  }
 
-Best regards,
+  async executeQuery(query: string): Promise<any> {
+    const client = new Client(this.config);
+    try {
+      await client.connect();
+      await client.query('BEGIN');
+      const result = await client.query(query);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Transaction error:', err.stack);
+      throw err;
+    } finally {
+      await client.end();
+    }
+  }
+}
+
+// 使用示例
+const dbConfig: DbConfig = {
+  user: 'your-username',
+  host: 'your-host',
+  database: 'your-database',
+  password: 'your-password',
+  port: 5432,
+};
+
+const database = new Database(dbConfig);
+
+const multiLineQuery = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE
+  );
+
+  INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
+  INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
+
+  SELECT * FROM users;
+`;
+
+database.executeQuery(multiLineQuery)
+  .then((result) => {
+    console.log('Query Result:', result.rows);
+  })
+  .catch((err) => {
+    console.error('Error executing query:', err);
+  });
