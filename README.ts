@@ -1,55 +1,46 @@
-import { Client, ClientConfig } from 'pg';
+import { Database } from './database';
 
-interface DbConfig extends ClientConfig {}
+const dbConfig = {
+  user: 'your-username',
+  host: 'your-host',
+  database: 'your-database',
+  password: 'your-password',
+  port: 5432,
+};
 
-export class Database {
-  private config: DbConfig;
-  private client: Client | null;
+const database = new Database(dbConfig);
 
-  constructor(config: DbConfig) {
-    this.config = config;
-    this.client = null;
-  }
+const createUserTableQuery = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE
+  );
+`;
 
-  // 连接数据库
-  async connect(): Promise<void> {
-    if (this.client) {
-      console.warn('Already connected to the database');
-      return;
-    }
+const insertUsersQuery = `
+  INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
+  INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
+`;
 
-    this.client = new Client(this.config);
-    await this.client.connect();
-    console.log('Connected to the database');
-  }
+const selectUsersQuery = `
+  SELECT * FROM users;
+`;
 
-  // 断开数据库连接
-  async disconnect(): Promise<void> {
-    if (!this.client) {
-      console.warn('Not connected to the database');
-      return;
-    }
+async function run() {
+  try {
+    await database.connect();
 
-    await this.client.end();
-    this.client = null;
-    console.log('Disconnected from the database');
-  }
+    await database.executeQuery(createUserTableQuery);
+    await database.executeQuery(insertUsersQuery);
+    const result = await database.executeQuery(selectUsersQuery);
 
-  // 执行SQL查询
-  async executeQuery(query: string): Promise<any> {
-    if (!this.client) {
-      throw new Error('Database not connected');
-    }
-
-    try {
-      await this.client.query('BEGIN');
-      const result = await this.client.query(query);
-      await this.client.query('COMMIT');
-      return result;
-    } catch (err) {
-      await this.client.query('ROLLBACK');
-      console.error('Transaction error:', err.stack);
-      throw err;
-    }
+    console.log('Query Result:', result.rows);
+  } catch (err) {
+    console.error('Error executing query:', err);
+  } finally {
+    await database.disconnect();
   }
 }
+
+run();
