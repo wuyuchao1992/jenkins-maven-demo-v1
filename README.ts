@@ -1,66 +1,55 @@
-import { Client } from 'pg';
+import { Client, ClientConfig } from 'pg';
 
-interface DbConfig {
-  user: string;
-  host: string;
-  database: string;
-  password: string;
-  port: number;
-}
+interface DbConfig extends ClientConfig {}
 
-class Database {
+export class Database {
   private config: DbConfig;
+  private client: Client | null;
 
   constructor(config: DbConfig) {
     this.config = config;
+    this.client = null;
   }
 
+  // 连接数据库
+  async connect(): Promise<void> {
+    if (this.client) {
+      console.warn('Already connected to the database');
+      return;
+    }
+
+    this.client = new Client(this.config);
+    await this.client.connect();
+    console.log('Connected to the database');
+  }
+
+  // 断开数据库连接
+  async disconnect(): Promise<void> {
+    if (!this.client) {
+      console.warn('Not connected to the database');
+      return;
+    }
+
+    await this.client.end();
+    this.client = null;
+    console.log('Disconnected from the database');
+  }
+
+  // 执行SQL查询
   async executeQuery(query: string): Promise<any> {
-    const client = new Client(this.config);
+    if (!this.client) {
+      throw new Error('Database not connected');
+    }
+
     try {
-      await client.connect();
-      await client.query('BEGIN');
-      const result = await client.query(query);
-      await client.query('COMMIT');
+      await this.client.query('BEGIN');
+      const result = await this.client.query(query);
+      await this.client.query('COMMIT');
       return result;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await this.client.query('ROLLBACK');
       console.error('Transaction error:', err.stack);
       throw err;
-    } finally {
-      await client.end();
     }
   }
 }
-
-// 使用示例
-const dbConfig: DbConfig = {
-  user: 'your-username',
-  host: 'your-host',
-  database: 'your-database',
-  password: 'your-password',
-  port: 5432,
-};
-
-const database = new Database(dbConfig);
-
-const multiLineQuery = `
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100) UNIQUE
-  );
-
-  INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
-  INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
-
-  SELECT * FROM users;
-`;
-
-database.executeQuery(multiLineQuery)
-  .then((result) => {
-    console.log('Query Result:', result.rows);
-  })
-  .catch((err) => {
-    console.error('Error executing query:', err);
-  });
