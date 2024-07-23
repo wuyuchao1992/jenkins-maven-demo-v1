@@ -1,46 +1,29 @@
-import { Database } from './database';
+import axios from 'axios';
+import fs from 'fs';
+import FormData from 'form-data';
 
-const dbConfig = {
-  user: 'your-username',
-  host: 'your-host',
-  database: 'your-database',
-  password: 'your-password',
-  port: 5432,
-};
-
-const database = new Database(dbConfig);
-
-const createUserTableQuery = `
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100) UNIQUE
-  );
-`;
-
-const insertUsersQuery = `
-  INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
-  INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
-`;
-
-const selectUsersQuery = `
-  SELECT * FROM users;
-`;
-
-async function run() {
+// 上传文件的函数
+async function uploadFile(filePath: string, uploadUrl: string) {
   try {
-    await database.connect();
+    // 创建 FormData 实例
+    const form = new FormData();
+    form.append('file', fs.createReadStream(filePath));
 
-    await database.executeQuery(createUserTableQuery);
-    await database.executeQuery(insertUsersQuery);
-    const result = await database.executeQuery(selectUsersQuery);
+    // 使用 axios 发送 POST 请求
+    const response = await axios.post(uploadUrl, form, {
+      headers: {
+        ...form.getHeaders(), // 设置 multipart/form-data headers
+      },
+    });
 
-    console.log('Query Result:', result.rows);
-  } catch (err) {
-    console.error('Error executing query:', err);
-  } finally {
-    await database.disconnect();
+    console.log('File uploaded successfully:', response.data);
+  } catch (error) {
+    console.error('Error uploading file:', error);
   }
 }
 
-run();
+// 调用上传函数，传入文件路径和上传 URL
+const filePath = 'path/to/your/file.ext';
+const uploadUrl = 'https://your-api-endpoint/upload';
+
+uploadFile(filePath, uploadUrl);
