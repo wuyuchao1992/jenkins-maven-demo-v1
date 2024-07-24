@@ -1,57 +1,35 @@
-import { Pool } from 'pg';
-import { Browser } from 'puppeteer'; // 假设你使用的是 Puppeteer
+import { Given } from '@cucumber/cucumber';
+import { DataTable } from '@cucumber/cucumber';
 
-// 创建连接池
-const pool = new Pool({
-  user: 'yourUsername',
-  host: 'yourHost',
-  database: 'yourDatabase',
-  password: 'yourPassword',
-  port: 5432,
-});
-
-let browser: Browser;
-
-async function deleteRecords(queries: string[]) {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN'); // 开始事务
-
-    // 循环执行每个删除语句
-    for (const query of queries) {
-      await client.query(query);
-    }
-
-    await client.query('COMMIT'); // 提交事务
-    console.log('Records deleted successfully');
-  } catch (error) {
-    await client.query('ROLLBACK'); // 回滚事务
-    console.error('Error executing queries:', error);
-  } finally {
-    client.release(); // 释放客户端
-  }
+// 定义一个接口来表示数据行
+interface FileData {
+  file: string;
+  fileType: string;
 }
 
-beforeAll(async () => {
-  // 启动浏览器
-  browser = await someBrowserLaunchingFunction();
+// 处理DataTable并将数据传递到其他方法
+Given('I have the following data', function (dataTable: DataTable) {
+  // 获取DataTable的所有行
+  const rows = dataTable.raw();
+  
+  // 忽略表头并处理每一行数据
+  const data: FileData[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const fileData: FileData = {
+      file: row[0],
+      fileType: row[1]
+    };
+    data.push(fileData);
+  }
+
+  // 传递数据到其他方法
+  this.processData(data);
 });
 
-afterAll(async () => {
-  // 确保关闭浏览器和连接池
-  await browser.close();
-  await pool.end();
-  console.log('Browser closed and pool ended');
-});
-
-test('database operations', async () => {
-  // 参数化的删除查询
-  const queries = [
-    'DELETE FROM A',
-    'DELETE FROM B'
-  ];
-
-  await deleteRecords(queries);
-  // 其他测试操作
+// 示例方法来处理数据
+Given('processData', function (data: FileData[]) {
+  data.forEach(item => {
+    console.log(`File: ${item.file}, FileType: ${item.fileType}`);
+  });
 });
