@@ -1,26 +1,35 @@
-// Function to check file status from an API with retry mechanism
-async function checkFileStatus(fileId: string): Promise<string> {
-    const maxRetries = 5;
-    const retryInterval = 2000; // 2 seconds
+import { test, expect } from '@playwright/test';
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            const response = await axios.get(`https://api.example.com/files/${fileId}`);
+test('should submit form successfully', async ({ page }) => {
+  await page.goto('https://example.com'); // Replace with your actual URL
 
-            if (response.status === 202) {
-                return response.data.data; // Extracting the 'data' field from the response
-            } else {
-                console.log(`Attempt ${attempt}: Received status code ${response.status}`);
-            }
-        } catch (error) {
-            console.error(`Attempt ${attempt}: Error checking file status: ${error.message}`);
-        }
+  const maxRetries = 10;
+  const retryInterval = 2000; // 2 seconds
+  let attempt = 0;
+  let submissionSuccess = false;
 
-        if (attempt < maxRetries) {
-            // Wait for the retry interval before the next attempt
-            await new Promise((resolve) => setTimeout(resolve, retryInterval));
-        } else {
-            throw new Error(`Failed to retrieve file status after ${maxRetries} attempts.`);
-        }
+  while (attempt < maxRetries && !submissionSuccess) {
+    attempt++;
+    console.log(`Attempt ${attempt}: Clicking submit button`);
+
+    // Click the submit button
+    await page.click('#submit-button'); // Replace with your actual submit button selector
+
+    // Wait for the response (adjust the selector to match the element showing the success message)
+    try {
+      await page.waitForSelector('#success-message', { timeout: 5000 }); // Adjust the selector and timeout as necessary
+      console.log(`Attempt ${attempt}: Submission successful`);
+      submissionSuccess = true;
+    } catch (error) {
+      console.log(`Attempt ${attempt}: Submission failed, retrying...`);
+      // Wait for the retry interval before the next attempt
+      await new Promise(resolve => setTimeout(resolve, retryInterval));
     }
-}
+  }
+
+  if (!submissionSuccess) {
+    throw new Error('Failed to submit form after 10 attempts');
+  }
+
+  expect(submissionSuccess).toBe(true);
+});
