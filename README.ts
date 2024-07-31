@@ -28,3 +28,9 @@ class CustomWorld extends World {
 }
 
 setWorldConstructor(CustomWorld);
+
+
+
+   const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : baseRetryInterval * attempt;
+                console.log(`Attempt ${attempt}: Received status code 429. Retrying after ${waitTime / 1000} seconds`);
+                await new Promise((resolve) => setTimeout(resolve, waitTime));
