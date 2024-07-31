@@ -29,22 +29,6 @@ class CustomWorld extends World {
 
 setWorldConstructor(CustomWorld);
 
-async function postRequestWithRetry(url, data, maxRetries = 5) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            const response = await axios.post(url, data);
-            if (response.status === 202) {
-                return response.data;
-            }
-        } catch (error) {
-            if (error.response && error.response.status === 429) {
-                console.log(`Attempt ${attempt} failed with status 429. Retrying...`);
-                if (attempt === maxRetries) {
-                    throw new Error('Max retries reached. Request failed with status 429.');
-                }
-            } else {
-                throw error;  // Throw if it's not a 429 error
-            }
-        }
-    }
-}
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
