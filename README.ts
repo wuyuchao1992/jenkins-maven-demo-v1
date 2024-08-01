@@ -1,34 +1,40 @@
-When('I intercept API requests to {string}', async function (apiEndpoint: string) {
-  await this.page.route(apiEndpoint, async (route, request) => {
-    const response = await this.page.request.fetch(request);
-    const jsonResponse = await response.json();
-    this.responses.push(jsonResponse);
-    await route.fulfill({ response });
-  });
-});
+import axios from 'axios';
 
-class CustomWorld extends World {
-  browser: Browser;
-  page: Page;
-  responses: any[];
-
-  constructor(options) {
-    super(options);
-    this.responses = [];
-  }
-
-  async openBrowser() {
-    this.browser = await chromium.launch();
-    this.page = await this.browser.newPage();
-  }
-
-  async closeBrowser() {
-    await this.browser.close();
-  }
+async function retryPostOperation(url: string, data: any, retries: number, delay: number): Promise<void> {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await axios.post(url, data);
+            if (response.status === 202) {
+                console.log('Operation succeeded with status code 202');
+                return;
+            } else {
+                console.log(`Unexpected status code ${response.status}, retrying...`);
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 429) {
+                    console.error('Received status code 429: Too Many Requests, retrying...');
+                } else if (error.code === 'ECONNRESET') {
+                    console.error('Error: socket hang up, retrying...');
+                } else {
+                    console.error(`Request failed: ${error.message}, retrying...`);
+                }
+            } else {
+                console.error(`Unexpected error: ${error}, retrying...`);
+            }
+        }
+        await new Promise(res => setTimeout(res, delay));
+    }
+    throw new Error('Operation failed after maximum retries');
 }
 
-setWorldConstructor(CustomWorld);
+(async () => {
+    const url = 'https://example.com/api';
+    const data = { key: 'value' };
 
-
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
+    try {
+        await retryPostOperation(url, data, 10, 30000);
+    } catch (error) {
+        console.error('Operation failed after 10 retries:', error);
+    }
+})();
