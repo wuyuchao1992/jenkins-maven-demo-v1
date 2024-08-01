@@ -1,40 +1,35 @@
-import axios from 'axios';
+import { test, expect } from '@playwright/test';
 
-async function retryPostOperation(url: string, data: any, retries: number, delay: number): Promise<void> {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await axios.post(url, data);
-            if (response.status === 202) {
-                console.log('Operation succeeded with status code 202');
-                return;
-            } else {
-                console.log(`Unexpected status code ${response.status}, retrying...`);
-            }
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 429) {
-                    console.error('Received status code 429: Too Many Requests, retrying...');
-                } else if (error.code === 'ECONNRESET') {
-                    console.error('Error: socket hang up, retrying...');
-                } else {
-                    console.error(`Request failed: ${error.message}, retrying...`);
-                }
-            } else {
-                console.error(`Unexpected error: ${error}, retrying...`);
-            }
-        }
-        await new Promise(res => setTimeout(res, delay));
-    }
-    throw new Error('Operation failed after maximum retries');
-}
+test('should submit form successfully', async ({ page }) => {
+  await page.goto('https://example.com'); // Replace with your actual URL
 
-(async () => {
-    const url = 'https://example.com/api';
-    const data = { key: 'value' };
+  const maxRetries = 10;
+  const retryInterval = 2000; // 2 seconds
+  let attempt = 0;
+  let submissionSuccess = false;
 
+  while (attempt < maxRetries && !submissionSuccess) {
+    attempt++;
+    console.log(`Attempt ${attempt}: Clicking submit button`);
+
+    // Click the submit button
+    await page.click('#submit-button'); // Replace with your actual submit button selector
+
+    // Wait for the response (adjust the selector to match the element showing the success message)
     try {
-        await retryPostOperation(url, data, 10, 30000);
+      await page.waitForSelector('#success-message', { timeout: 5000 }); // Adjust the selector and timeout as necessary
+      console.log(`Attempt ${attempt}: Submission successful`);
+      submissionSuccess = true;
     } catch (error) {
-        console.error('Operation failed after 10 retries:', error);
+      console.log(`Attempt ${attempt}: Submission failed, retrying...`);
+      // Wait for the retry interval before the next attempt
+      await new Promise(resolve => setTimeout(resolve, retryInterval));
     }
-})();
+  }
+
+  if (!submissionSuccess) {
+    throw new Error('Failed to submit form after 10 attempts');
+  }
+
+  expect(submissionSuccess).toBe(true);
+});
