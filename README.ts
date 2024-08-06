@@ -1,14 +1,15 @@
 import { setWorldConstructor, Before, After } from '@cucumber/cucumber';
-import { IWorldOptions } from '@cucumber/cucumber/lib/support_code_library_builder/world';
+import { IWorldOptions, World } from '@cucumber/cucumber';
 
-class CustomWorld {
+class CustomWorld extends World {
   attach: any;
   parameters: any;
   isSingleThread: boolean;
 
-  constructor({ attach, parameters }: IWorldOptions) {
-    this.attach = attach;
-    this.parameters = parameters;
+  constructor(options: IWorldOptions) {
+    super(options);
+    this.attach = options.attach;
+    this.parameters = options.parameters;
     this.isSingleThread = false;
   }
 
@@ -19,10 +20,10 @@ class CustomWorld {
 
 setWorldConstructor(CustomWorld);
 
-Before('@single-thread', function () {
-  this.setSingleThread(true);
+Before({ tags: '@single-thread' }, function () {
+  (this as CustomWorld).setSingleThread(true);
 });
 
-After('@single-thread', function () {
-  this.setSingleThread(false);
+After({ tags: '@single-thread' }, function () {
+  (this as CustomWorld).setSingleThread(false);
 });
