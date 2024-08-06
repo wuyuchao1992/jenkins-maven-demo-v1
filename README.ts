@@ -1,13 +1,18 @@
-const { Before, After, setWorldConstructor } = require('@cucumber/cucumber');
+import { setWorldConstructor, Before, After } from '@cucumber/cucumber';
+import { IWorldOptions } from '@cucumber/cucumber/lib/support_code_library_builder/world';
 
 class CustomWorld {
-  constructor({ attach, parameters }) {
+  attach: any;
+  parameters: any;
+  isSingleThread: boolean;
+
+  constructor({ attach, parameters }: IWorldOptions) {
     this.attach = attach;
     this.parameters = parameters;
     this.isSingleThread = false;
   }
 
-  setSingleThread(value) {
+  setSingleThread(value: boolean) {
     this.isSingleThread = value;
   }
 }
