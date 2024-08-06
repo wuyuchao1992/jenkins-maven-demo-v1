@@ -1,29 +1,11 @@
-import { setWorldConstructor, Before, After } from '@cucumber/cucumber';
-import { IWorldOptions, World } from '@cucumber/cucumber';
+// hooks.ts
+import { setParallelCanAssign, ITestCaseHookParameter } from '@cucumber/cucumber';
 
-class CustomWorld extends World {
-  attach: any;
-  parameters: any;
-  isSingleThread: boolean;
-
-  constructor(options: IWorldOptions) {
-    super(options);
-    this.attach = options.attach;
-    this.parameters = options.parameters;
-    this.isSingleThread = false;
+setParallelCanAssign((testCase: ITestCaseHookParameter) => {
+  // 检查是否有 @singleThread 标签
+  const tags = testCase.pickle.tags.map(tag => tag.name);
+  if (tags.includes('@singleThread')) {
+    return false; // 禁止并行执行
   }
-
-  setSingleThread(value: boolean) {
-    this.isSingleThread = value;
-  }
-}
-
-setWorldConstructor(CustomWorld);
-
-Before({ tags: '@single-thread' }, function () {
-  (this as CustomWorld).setSingleThread(true);
-});
-
-After({ tags: '@single-thread' }, function () {
-  (this as CustomWorld).setSingleThread(false);
+  return true; // 允许并行执行
 });
