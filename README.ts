@@ -1,10 +1,25 @@
-import { setParallelCanAssign } from '@cucumber/cucumber';
+import { Before, After } from 'cucumber';
+import { browser } from 'playwright';
 
-setParallelCanAssign((type, scenario) => {
-  // 检查 scenario 对象中的 tags 属性是否包含 @singleThread 标签
-  const tags = scenario.pickle.tags;
-  if (tags.some(tag => tag.name === '@singleThread')) {
-    return false; // 如果标记为 @singleThread，则不并行运行
+let singleThreadFeatureRunning = false;
+
+Before({ tags: '@singleThread' }, async function () {
+  // 假设只有一个浏览器实例在跑单线程的feature
+  if (singleThreadFeatureRunning) {
+    // 阻塞其他的feature，直到单线程的feature完成
+    await new Promise(resolve => {
+      const check = setInterval(() => {
+        if (!singleThreadFeatureRunning) {
+          clearInterval(check);
+          resolve(true);
+        }
+      }, 100);
+    });
+  } else {
+    singleThreadFeatureRunning = true;
   }
-  return true; // 其他情况下并行运行
+});
+
+After({ tags: '@singleThread' }, async function () {
+  singleThreadFeatureRunning = false;
 });
