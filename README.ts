@@ -1,21 +1,18 @@
-import { BeforeAll, AfterAll, setDefaultTimeout } from 'cucumber';
-import { browser } from 'playwright';
+import { Before, After, setDefaultTimeout } from '@cucumber/cucumber';
 
-let isSingleThreadRunning = false;
-let waitingQueue: (() => void)[] = [];
+// Set default timeout to a reasonable value
+setDefaultTimeout(60000); // Example: 60 seconds
 
-BeforeAll({ tags: '@singleThread' }, async function () {
-  if (isSingleThreadRunning) {
-    await new Promise<void>(resolve => waitingQueue.push(resolve));
+Before(function (scenario) {
+  if (scenario.sourceLocation.uri.includes('@single-thread')) {
+    // If the scenario belongs to a single-threaded feature
+    process.env.CUCUMBER_PARALLEL = '1'; // Set environment variable for single-threaded
   } else {
-    isSingleThreadRunning = true;
+    // Set the parallel count for other scenarios
+    process.env.CUCUMBER_PARALLEL = '6'; // Example: 6 parallel threads
   }
 });
 
-AfterAll({ tags: '@singleThread' }, async function () {
-  isSingleThreadRunning = false;
-  if (waitingQueue.length > 0) {
-    const next = waitingQueue.shift();
-    if (next) next();
-  }
+After(function () {
+  // Clean up or reset any settings if needed
 });
