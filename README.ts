@@ -1,3 +1,5 @@
+merge-and-generate-report.ts
+
 import fs from 'fs';
 import path from 'path';
 import { merge } from 'cucumber-reporting';
