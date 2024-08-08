@@ -1,3 +1,5 @@
+npm install cucumber-reporting --save-dev
+
 merge-and-generate-report.ts
 
 import fs from 'fs';
