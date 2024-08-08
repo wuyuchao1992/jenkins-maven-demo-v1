@@ -1,68 +1,51 @@
-// 在 TypeScript 文件顶部添加这个声明
-declare module 'multiple-cucumber-html-reporter';
+const fs = require('fs');
+const path = require('path');
+const { merge } = require('cucumber-reporting');
+const reporter = require('cucumber-html-reporter');
 
-// 然后再导入模块
-import { generate } from 'multiple-cucumber-html-reporter';
+const jsonDir = 'reports';
+const outputJsonFile = 'reports/cucumber-combined.json';
+const outputHtmlFile = 'report/cucumber-report.html'; // 将报告放在 report 目录下
 
-generate({
-  jsonDir: 'reports',
-  reportPath: 'reports/html',
-  metadata: {
-    browser: {
-      name: 'chrome',
-      version: '89'
-    },
-    device: 'Local test machine',
-    platform: {
-      name: 'ubuntu',
-      version: '20.04'
-    }
-  },
-  customData: {
-    title: 'Run info',
-    data: [
-      { label: 'Project', value: 'My Project' },
-      { label: 'Release', value: '1.2.3' },
-      { label: 'Cycle', value: 'B11221.34321' },
-      { label: 'Execution Start Time', value: new Date().toISOString() },
-      { label: 'Execution End Time', value: new Date().toISOString() }
-    ]
-  }
+// 获取所有的 JSON 文件
+const jsonFiles = fs.readdirSync(jsonDir).filter(file => file.endsWith('.json'));
+
+// 读取并合并 JSON 文件
+const jsonReports = jsonFiles.map(file => {
+  const filePath = path.join(jsonDir, file);
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 });
 
+const combinedReport = merge(jsonReports);
 
-declare module 'multiple-cucumber-html-reporter' {
-  interface Metadata {
-    browser: { name: string; version: string };
-    device: string;
-    platform: { name: string; version: string };
+// 写入合并后的 JSON 文件
+fs.writeFileSync(outputJsonFile, JSON.stringify(combinedReport, null, 2));
+
+// 生成 HTML 报告
+const options = {
+  theme: 'bootstrap',
+  jsonFile: outputJsonFile,
+  output: outputHtmlFile,
+  reportSuiteAsScenarios: true,
+  launchReport: true,
+  metadata: {
+    "App Version": "1.0.0",
+    "Test Environment": "STAGING",
+    "Browser": "Chrome  89.0.4389.82",
+    "Platform": "Windows 10",
+    "Parallel": "Scenarios",
+    "Executed": "Remote"
   }
+};
 
-  interface CustomData {
-    title: string;
-    data: { label: string; value: string }[];
-  }
+reporter.generate(options);
 
-  interface ReportOptions {
-    jsonDir: string;
-    reportPath: string;
-    metadata: Metadata;
-    customData?: CustomData;
-  }
-
-  export function generate(options: ReportOptions): void;
-}
-
-
-// @ts-ignore
+console.log('HTML report has been generated at', outputHtmlFile);
 
 {
   "scripts": {
-    "prepare-reports": "mkdir -p reports",
-    "test:parallel": "cucumber-js",
-    "test:singleThread": "cucumber-js --profile singleThread",
-    "merge-reports": "cucumber-json-merge reports/cucumber-parallel.json reports/cucumber-single-thread.json > reports/cucumber-combined.json",
-    "generate-report": "ts-node generate-html-report.ts",
-    "test:all": "npm run prepare-reports && concurrently \"npm run test:singleThread\" \"npm run test:parallel\" && npm run merge-reports && npm run generate-report"
+    "merge-and-generate-report": "node merge-and-generate-report.js",
+    "test:all": "npm run prepare-reports && npm run test:singleThread && npm run test:parallel && npm run merge-and-generate-report"
   }
 }
+
