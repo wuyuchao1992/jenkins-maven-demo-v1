@@ -1,3 +1,6 @@
+npm install multiple-cucumber-html-reporter --save-dev
+
+
 import fs from 'fs';
 import path from 'path';
 import { generate } from 'multiple-cucumber-html-reporter';
@@ -38,3 +41,12 @@ generate({
 });
 
 console.log('HTML report has been generated at', outputHtmlFile);
+
+{
+  "scripts": {
+    "build-report-script": "tsc merge-and-generate-report.ts",
+    "merge-and-generate-report": "node merge-and-generate-report.js",
+    "test:all": "npm run prepare-reports && npm run test:singleThread && npm run test:parallel && npm run build-report-script && npm run merge-and-generate-report"
+  }
+}
+
