@@ -1,28 +1,28 @@
-const fs = require('fs');
-const path = require('path');
-const { merge } = require('cucumber-reporting');
-const reporter = require('cucumber-html-reporter');
+import fs from 'fs';
+import path from 'path';
+import { merge } from 'cucumber-reporting';
+import { generate, Options } from 'cucumber-html-reporter';
 
 const jsonDir = 'reports';
 const outputJsonFile = 'reports/cucumber-combined.json';
-const outputHtmlFile = 'report/cucumber-report.html'; // 将报告放在 report 目录下
+const outputHtmlFile = 'report/cucumber-report.html'; // Place the report in the report directory
 
-// 获取所有的 JSON 文件
+// Get all JSON files
 const jsonFiles = fs.readdirSync(jsonDir).filter(file => file.endsWith('.json'));
 
-// 读取并合并 JSON 文件
-const jsonReports = jsonFiles.map(file => {
+// Read and merge JSON files
+const jsonReports = jsonFiles.map((file) => {
   const filePath = path.join(jsonDir, file);
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 });
 
 const combinedReport = merge(jsonReports);
 
-// 写入合并后的 JSON 文件
+// Write the merged JSON file
 fs.writeFileSync(outputJsonFile, JSON.stringify(combinedReport, null, 2));
 
-// 生成 HTML 报告
-const options = {
+// Configure HTML report options
+const options: Options = {
   theme: 'bootstrap',
   jsonFile: outputJsonFile,
   output: outputHtmlFile,
@@ -38,9 +38,11 @@ const options = {
   }
 };
 
-reporter.generate(options);
+// Generate HTML report
+generate(options);
 
 console.log('HTML report has been generated at', outputHtmlFile);
+
 
 {
   "scripts": {
