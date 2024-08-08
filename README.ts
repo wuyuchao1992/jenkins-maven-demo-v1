@@ -1,4 +1,4 @@
-npm install cucumber-reporting --save-dev
+npm install cucumber-html-reporter cucumber-json-merge --save-dev
 
 merge-and-generate-report.ts
 
