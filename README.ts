@@ -18,10 +18,11 @@ module.exports = {
 
 {
   "scripts": {
+    "prepare-reports": "mkdir -p reports",
     "test:parallel": "cucumber-js",
     "test:singleThread": "cucumber-js --profile singleThread",
     "merge-reports": "cucumber-json-merge reports/cucumber-*.json > reports/cucumber-combined.json",
     "generate-report": "npx multiple-cucumber-html-reporter --report-dir reports/html --json-dir reports",
-    "test:all": "concurrently \"npm run test:singleThread\" \"npm run test:parallel\" && npm run merge-reports && npm run generate-report"
+    "test:all": "npm run prepare-reports && concurrently \"npm run test:singleThread\" \"npm run test:parallel\" && npm run merge-reports && npm run generate-report"
   }
 }
