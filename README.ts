@@ -1,20 +1,27 @@
-### Subject: Confirmation of Security Issue Found During AppD Integration (Task ID: XXXX)
+npm install multiple-cucumber-html-reporter cucumber-json-merge concurrently --save-dev
 
----
+module.exports = {
+  default: {
+    format: ['pretty', 'json:reports/cucumber-parallel.json'],
+    require: ['features/**/*.ts'],
+    tags: 'not @singleThread',
+    parallel: 6
+  },
+  singleThread: {
+    format: ['pretty', 'json:reports/cucumber-single-thread.json'],
+    require: ['features/**/*.ts'],
+    tags: '@singleThread',
+    parallel: 1
+  }
+};
 
-Hi [Colleague's Name],
 
-I hope you're doing well.
-
-During our recent front-end integration of AppD (Task ID: XXXX), we discovered that this integration sends requests to an external URL. To ensure we comply with our security policies and regulations, could you please confirm whether we are permitted to do this?
-
-If there is any confusion or further information needed, please feel free to contact me.
-
-Thank you!
-
-Best regards,  
-[Your Name]  
-[Your Position]  
-[Your Contact Information]
-
----
+{
+  "scripts": {
+    "test:parallel": "cucumber-js",
+    "test:singleThread": "cucumber-js --profile singleThread",
+    "merge-reports": "cucumber-json-merge reports/cucumber-*.json > reports/cucumber-combined.json",
+    "generate-report": "npx multiple-cucumber-html-reporter --report-dir reports/html --json-dir reports",
+    "test:all": "concurrently \"npm run test:singleThread\" \"npm run test:parallel\" && npm run merge-reports && npm run generate-report"
+  }
+}
