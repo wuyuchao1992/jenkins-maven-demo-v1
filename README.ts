@@ -1,4 +1,5 @@
 npm install typescript ts-node @types/node multiple-cucumber-html-reporter cucumber-json-merge concurrently --save-dev
+declare module 'multiple-cucumber-html-reporter';
 
 import { generate } from 'multiple-cucumber-html-reporter';
 
