@@ -4,23 +4,18 @@ merge-and-generate-report.ts
 
 import fs from 'fs';
 import path from 'path';
-import { merge } from 'cucumber-reporting';
 import { generate, Options } from 'cucumber-html-reporter';
+import merge from 'cucumber-json-merge';
 
 const jsonDir = 'reports';
 const outputJsonFile = 'reports/cucumber-combined.json';
 const outputHtmlFile = 'report/cucumber-report.html'; // Place the report in the report directory
 
 // Get all JSON files
-const jsonFiles = fs.readdirSync(jsonDir).filter(file => file.endsWith('.json'));
+const jsonFiles = fs.readdirSync(jsonDir).filter(file => file.endsWith('.json')).map(file => path.join(jsonDir, file));
 
-// Read and merge JSON files
-const jsonReports = jsonFiles.map((file) => {
-  const filePath = path.join(jsonDir, file);
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-});
-
-const combinedReport = merge(jsonReports);
+// Merge JSON files
+const combinedReport = merge(jsonFiles);
 
 // Write the merged JSON file
 fs.writeFileSync(outputJsonFile, JSON.stringify(combinedReport, null, 2));
@@ -46,6 +41,7 @@ const options: Options = {
 generate(options);
 
 console.log('HTML report has been generated at', outputHtmlFile);
+
 
 
 {
