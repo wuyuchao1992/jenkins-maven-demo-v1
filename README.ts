@@ -37,3 +37,27 @@ export async function globalSetup(browserContext: BrowserContext) {
 BeforeAll(async function () {
     await globalSetup(browserContext);
 });
+
+import { BeforeAll } from '@cucumber/cucumber';
+import { chromium, Browser, BrowserContext } from 'playwright';
+
+let browser: Browser;
+let browserContext: BrowserContext;
+
+BeforeAll(async function () {
+    // 启动浏览器
+    browser = await chromium.launch();
+
+    // 创建一个新的浏览器上下文
+    browserContext = await browser.newContext();
+
+    // 应用高亮逻辑到所有页面
+    browserContext.on('page', page => {
+        addHighlightingToLocator(page);
+    });
+});
+
+// 你可以在其他钩子或测试中使用 browserContext 和 page
+BeforeAll(async function () {
+    await globalSetup();
+});
