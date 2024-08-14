@@ -1,30 +1,38 @@
-import { After, Status } from '@cucumber/cucumber';
+import { Before, After, Status } from '@cucumber/cucumber';
 import { Page } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 
-After(async function (this: { page: Page }, scenario) {
+Before(async function (this: { page: Page }) {
+    // 在每个测试之前，注入 JavaScript 来监听点击事件并保存最后一个点击的元素
+    await this.page.addInitScript(() => {
+        (window as any).lastClickedElement = null;
+        document.addEventListener('click', (event) => {
+            (window as any).lastClickedElement = event.target as HTMLElement;
+        }, true);
+    });
+});
+
+After(async function (this: { page: Page, attach: Function }, scenario) {
     if (scenario.result?.status === Status.FAILED) {
+        // 高亮最后一个点击的元素
+        await this.page.evaluate(() => {
+            const lastClickedElement = (window as any).lastClickedElement;
+            if (lastClickedElement) {
+                lastClickedElement.style.border = '2px solid red';
+                lastClickedElement.style.boxShadow = '0 0 10px red';
+            }
+        });
+
         const screenshotPath = path.resolve(`reports/screenshots/${scenario.pickle.name}-${Date.now()}.png`);
         
-        // 捕获并保存截图
+        // 捕获并保存高亮后的截图
         await this.page.screenshot({ path: screenshotPath });
         
-        // 将截图转换为 Base64
-        const screenshotData = fs.readFileSync(screenshotPath);
-        const base64Screenshot = screenshotData.toString('base64');
+        // 读取截图文件并转换为 Buffer
+        const screenshotBuffer = fs.readFileSync(screenshotPath);
         
-        // 手动嵌入到自定义报告中（假设你有某种自定义报告系统）
-        const html = `
-            <html>
-            <body>
-                <h1>Scenario Failed: ${scenario.pickle.name}</h1>
-                <img src="data:image/png;base64,${base64Screenshot}" alt="Screenshot" />
-            </body>
-            </html>
-        `;
-        
-        // 将 HTML 保存到报告目录
-        fs.writeFileSync(`reports/screenshots/${scenario.pickle.name}-${Date.now()}.html`, html);
+        // 将 Buffer 附加到报告中，指定 MIME 类型为 'image/png'
+        this.attach(screenshotBuffer, 'image/png');
     }
 });
