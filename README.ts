@@ -1,36 +1,39 @@
-import { Before, After } from '@cucumber/cucumber';
-import { Page } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+// 创建一个辅助函数来为元素添加高亮效果
+function highlightElement(element: Element) {
+    (element as HTMLElement).style.outline = '2px solid red';
+    (element as HTMLElement).style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
 
-let lastFoundSelector: string | null = null;
+    setTimeout(() => {
+        (element as HTMLElement).style.outline = '';
+        (element as HTMLElement).style.backgroundColor = '';
+    }, 2000); // 2秒后移除高亮
+}
 
-Before(async function (this: { page: Page }) {
-    // 包装原始的 locator 方法
-    const originalLocator = this.page.locator.bind(this.page);
+// 在 Page 上覆盖 locator 方法，添加高亮逻辑
+function addHighlightingToLocator(page: Page) {
+    const originalLocator = page.locator.bind(page);
 
-    this.page.locator = (selector: string, ...args: any[]) => {
-        // 保存最后一个查找的选择器字符串
-        lastFoundSelector = selector;
-        return originalLocator(selector, ...args);
-    };
-});
+    page.locator = (selector: string, ...args: any[]) => {
+        const locator = originalLocator(selector, ...args);
 
-After(async function (this: { page: Page, attach: Function }, scenario) {
-    if (scenario.result?.status === 'FAILED' && lastFoundSelector) {
-        const screenshotPath = path.resolve(`reports/screenshots/${scenario.pickle.name}-${Date.now()}.png`);
-        
-        // 捕获并保存截图，并隐藏最后查找的元素
-        await this.page.screenshot({
-            path: screenshotPath,
-            mask: [{ selector: lastFoundSelector }],  // 遮蔽最后查找的元素
-            maskColor: '#000000' // 遮蔽区域的颜色 (黑色)
+        // 包装 evaluateHandle 来高亮元素
+        locator.evaluateHandle((element) => {
+            highlightElement(element);
         });
 
-        // 读取截图文件并转换为 Buffer
-        const screenshotBuffer = fs.readFileSync(screenshotPath);
-        
-        // 将 Buffer 附加到报告中，指定 MIME 类型为 'image/png'
-        this.attach(screenshotBuffer, 'image/png');
-    }
+        return locator;
+    };
+}
+
+// 在 Playwright 启动时全局应用
+export async function globalSetup(browserContext: BrowserContext) {
+    browserContext.on('page', page => {
+        addHighlightingToLocator(page);
+    });
+}
+
+
+// 在 beforeAll 或全局配置中应用
+BeforeAll(async function () {
+    await globalSetup(browserContext);
 });
