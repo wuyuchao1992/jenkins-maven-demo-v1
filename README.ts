@@ -57,7 +57,9 @@ BeforeAll(async function () {
     });
 });
 
-// 你可以在其他钩子或测试中使用 browserContext 和 page
+const { BeforeAll } = require('@cucumber/cucumber');
+const { globalSetup } = require('./path/to/setup.js');
+
 BeforeAll(async function () {
     await globalSetup();
 });
