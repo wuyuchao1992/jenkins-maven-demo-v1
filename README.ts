@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    video: 'on-first-retry', // 你可以选择 'on', 'on-first-retry', 或 'retain-on-failure'
+    video: 'retain-on-failure', // 你可以选择 'on', 'on-first-retry', 或 'retain-on-failure'
   },
 });
 
