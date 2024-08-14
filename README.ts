@@ -1,65 +1,35 @@
-// 创建一个辅助函数来为元素添加高亮效果
-function highlightElement(element: Element) {
-    (element as HTMLElement).style.outline = '2px solid red';
-    (element as HTMLElement).style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+import { defineConfig } from '@playwright/test';
 
-    setTimeout(() => {
-        (element as HTMLElement).style.outline = '';
-        (element as HTMLElement).style.backgroundColor = '';
-    }, 2000); // 2秒后移除高亮
-}
-
-// 在 Page 上覆盖 locator 方法，添加高亮逻辑
-function addHighlightingToLocator(page: Page) {
-    const originalLocator = page.locator.bind(page);
-
-    page.locator = (selector: string, ...args: any[]) => {
-        const locator = originalLocator(selector, ...args);
-
-        // 包装 evaluateHandle 来高亮元素
-        locator.evaluateHandle((element) => {
-            highlightElement(element);
-        });
-
-        return locator;
-    };
-}
-
-// 在 Playwright 启动时全局应用
-export async function globalSetup(browserContext: BrowserContext) {
-    browserContext.on('page', page => {
-        addHighlightingToLocator(page);
-    });
-}
-
-
-// 在 beforeAll 或全局配置中应用
-BeforeAll(async function () {
-    await globalSetup(browserContext);
+export default defineConfig({
+  use: {
+    video: 'on-first-retry', // 你可以选择 'on', 'on-first-retry', 或 'retain-on-failure'
+  },
 });
 
-import { BeforeAll } from '@cucumber/cucumber';
-import { chromium, Browser, BrowserContext } from 'playwright';
+import { Before, After, setDefaultTimeout } from '@cucumber/cucumber';
+import { BrowserContext, Page } from 'playwright';
+import { expect } from '@playwright/test';
 
-let browser: Browser;
-let browserContext: BrowserContext;
+let context: BrowserContext;
+let page: Page;
 
-BeforeAll(async function () {
-    // 启动浏览器
-    browser = await chromium.launch();
-
-    // 创建一个新的浏览器上下文
-    browserContext = await browser.newContext();
-
-    // 应用高亮逻辑到所有页面
-    browserContext.on('page', page => {
-        addHighlightingToLocator(page);
-    });
+Before(async () => {
+  context = await global.browser.newContext({
+    video: {
+      dir: 'videos/', // 设置录像文件保存的目录
+    },
+  });
+  page = await context.newPage();
 });
 
-const { BeforeAll } = require('@cucumber/cucumber');
-const { globalSetup } = require('./path/to/setup.js');
-
-BeforeAll(async function () {
-    await globalSetup();
+After(async function () {
+  // 在测试失败时嵌入录像
+  if (this.result?.status === 'failed') {
+    const video = await page.video();
+    if (video) {
+      const videoPath = await video.path();
+      this.attach(`file://${videoPath}`, 'video/webm');
+    }
+  }
+  await context.close();
 });
