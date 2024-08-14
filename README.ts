@@ -5,19 +5,15 @@ import path from 'path';
 BeforeAll(() => {
     const screenshotDir = path.join(__dirname, '..', 'reports', 'screenshots');
     
-    // 检查截图目录是否存在
-    if (fs.existsSync(screenshotDir)) {
-        // 读取目录中的所有文件并删除
-        fs.readdirSync(screenshotDir).forEach(file => {
-            const filePath = path.join(screenshotDir, file);
-            if (fs.lstatSync(filePath).isFile()) {
-                fs.unlinkSync(filePath);
-            }
-        });
-        console.log(`Cleared screenshots from: ${screenshotDir}`);
-    } else {
-        // 如果目录不存在，则创建它
+    try {
+        if (fs.existsSync(screenshotDir)) {
+            fs.rmSync(screenshotDir, { recursive: true, force: true });
+            console.log(`Deleted directory: ${screenshotDir}`);
+        }
+        
         fs.mkdirSync(screenshotDir, { recursive: true });
-        console.log(`Created directory for screenshots: ${screenshotDir}`);
+        console.log(`Created directory: ${screenshotDir}`);
+    } catch (error) {
+        console.error(`Error handling screenshots directory: ${error}`);
     }
 });
