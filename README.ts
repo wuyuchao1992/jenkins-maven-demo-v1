@@ -1,35 +1,25 @@
-import { defineConfig } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-export default defineConfig({
-  use: {
-    video: 'retain-on-failure', // 你可以选择 'on', 'on-first-retry', 或 'retain-on-failure'
-  },
-});
+test('Verify navigation URL matches the target URL', async ({ page, params }) => {
+  // 获取 URL 参数
+  const baseUrl = params.URL;
 
-import { Before, After, setDefaultTimeout } from '@cucumber/cucumber';
-import { BrowserContext, Page } from 'playwright';
-import { expect } from '@playwright/test';
-
-let context: BrowserContext;
-let page: Page;
-
-Before(async () => {
-  context = await global.browser.newContext({
-    video: {
-      dir: 'videos/', // 设置录像文件保存的目录
-    },
-  });
-  page = await context.newPage();
-});
-
-After(async function () {
-  // 在测试失败时嵌入录像
-  if (this.result?.status === 'failed') {
-    const video = await page.video();
-    if (video) {
-      const videoPath = await video.path();
-      this.attach(`file://${videoPath}`, 'video/webm');
-    }
+  // 判断 URL 中是否包含 'DEV' 或 'UAT'
+  let targetUrl = '';
+  if (baseUrl.includes('DEV')) {
+    targetUrl = 'https://dev.example.com';
+  } else if (baseUrl.includes('UAT')) {
+    targetUrl = 'https://uat.example.com';
+  } else {
+    targetUrl = 'https://prod.example.com'; // 默认生产环境URL
   }
-  await context.close();
+
+  // 跳转到目标 URL
+  await page.goto(targetUrl);
+
+  // 获取当前页面的 URL
+  const currentURL = page.url();
+
+  // 验证当前 URL 是否与 targetUrl 相等
+  expect(currentURL).toBe(targetUrl);
 });
