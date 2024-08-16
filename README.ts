@@ -1,25 +1,63 @@
-import { test, expect } from '@playwright/test';
+To connect to MongoDB and delete data from a collection based on the collection name in a TypeScript setup using Cucumber and Playwright, follow these steps:
 
-test('Verify navigation URL matches the target URL', async ({ page, params }) => {
-  // 获取 URL 参数
-  const baseUrl = params.URL;
+### 1. Install Required Packages
+First, you need to install the MongoDB Node.js driver:
 
-  // 判断 URL 中是否包含 'DEV' 或 'UAT'
-  let targetUrl = '';
-  if (baseUrl.includes('DEV')) {
-    targetUrl = 'https://dev.example.com';
-  } else if (baseUrl.includes('UAT')) {
-    targetUrl = 'https://uat.example.com';
-  } else {
-    targetUrl = 'https://prod.example.com'; // 默认生产环境URL
-  }
+```bash
+npm install mongodb
+```
 
-  // 跳转到目标 URL
-  await page.goto(targetUrl);
+### 2. Create a MongoDB Utility Module
 
-  // 获取当前页面的 URL
-  const currentURL = page.url();
+Create a `mongodb-utils.ts` file to handle the MongoDB connection and operations:
 
-  // 验证当前 URL 是否与 targetUrl 相等
-  expect(currentURL).toBe(targetUrl);
+```typescript
+import { MongoClient } from 'mongodb';
+
+const uri = process.env.MONGO_URI || 'your-mongodb-connection-string';
+let client: MongoClient;
+
+export const connectToDatabase = async () => {
+    if (!client) {
+        client = new MongoClient(uri);
+        await client.connect();
+    }
+    return client.db(process.env.DB_NAME || 'your-database-name');
+};
+
+export const deleteDataFromCollection = async (collectionName: string) => {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    const result = await collection.deleteMany({});
+    return result;
+};
+```
+
+### 3. Use the MongoDB Utility in Cucumber Steps
+
+In your Cucumber step definitions, you can use the utility functions:
+
+```typescript
+import { Given } from '@cucumber/cucumber';
+import { deleteDataFromCollection } from '../utils/mongodb-utils';
+
+Given('I delete all data from the {string} collection', async (collectionName: string) => {
+    const result = await deleteDataFromCollection(collectionName);
+    console.log(`Deleted ${result.deletedCount} documents from the ${collectionName} collection`);
 });
+```
+
+### 4. Set Up Environment Variables
+
+Ensure your environment variables are correctly set up in a `.env` file or through your CI/CD pipeline:
+
+```
+MONGO_URI=mongodb://your-username:your-password@your-cluster-url/dbname
+DB_NAME=your-database-name
+```
+
+### 5. Running the Tests
+
+Now you can run your Cucumber tests, and when the `Given` step is executed, it will connect to MongoDB and delete all data from the specified collection.
+
+This setup will allow you to connect to MongoDB, select the database, and delete all documents from a specified collection using TypeScript, Cucumber, and Playwright.
