@@ -1,25 +1,29 @@
-async function addRowsBasedOnRules(rules: Rule[]) {
-    for (let i = 0; i < rules.length; i++) {
-        const rule = rules[i];
-        const rowNumber = `row_${i}`;
+import { Page, Locator, expect } from '@playwright/test';
 
-        // Skip the row if the ruleValue is empty
-        if (!rule.ruleValue) {
-            console.log(`Skipping ${rule.fieldName} as the rule value is empty.`);
-            continue;
+class BreakdownValidator {
+    private page: Page;
+
+    constructor(page: Page) {
+        this.page = page;
+    }
+
+    /**
+     * 验证页面上是否存在指定的文本数组
+     * @param breakdowns - 一个包含要验证的文本的数组
+     */
+    async validateBreakdowns(breakdowns: string[]): Promise<void> {
+        for (const breakdown of breakdowns) {
+            const locator = this.page.locator(`text=${breakdown}`);
+            await expect(locator).toBeVisible(); // 期望页面上存在该文本
         }
+    }
 
-        // Click the + button to add a new row, if not the first row
-        if (i > 0) {
-            await this.page.getByTestId('DrawerContent').getByTestId(rowNumber).getByRole('button').click();
-        }
-
-        // Click on the drop-down for the current row
-        await this.page.getByTestId('DrawerContent').getByTestId(rowNumber).getByTestId('evTooltip').locator('div').nth(1).click();
-
-        // Select the option based on the rule field name
-        await this.page.getByText(rule.fieldName).click();
-
-        // Further actions can be added here based on `rule.validationRuleType` or `rule.type` if needed
+    /**
+     * 从字符串解析出数组，并进行验证
+     * @param breakdownsString - 逗号分隔的字符串
+     */
+    async validateBreakdownsFromString(breakdownsString: string): Promise<void> {
+        const breakdowns = breakdownsString.split(',').map(item => item.trim());
+        await this.validateBreakdowns(breakdowns);
     }
 }
