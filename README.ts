@@ -1,20 +1,25 @@
 import { Given, Then } from '@cucumber/cucumber';
 import { DataTable } from '@cucumber/cucumber';
 
-// 假设 getRandomString 方法已存在并导入
-import { getRandomString } from './utils';
+// 随机选择一个值
+function randomlySelectValue(value: string): string {
+    const options = value.split('/'); // 根据斜杠分割候选值
+    const randomIndex = Math.floor(Math.random() * options.length); // 随机选择一个索引
+    return options[randomIndex]; // 返回随机选择的值
+}
 
 Given('I have the following user data:', function (dataTable: DataTable) {
     // 存储原始 DataTable
     this.originalDataTable = dataTable.hashes();
 });
 
-Given('I replace all usernames with random values', function () {
-    // 生成随机的 username 并替换原始 DataTable 中的 username
+Given('I replace usernames with randomly selected values', function () {
+    // 遍历 DataTable 并随机选择候选值
     this.modifiedDataTable = this.originalDataTable.map(row => {
+        const username = randomlySelectValue(row.username); // 随机选择 username
         return {
             ...row,
-            username: getRandomString() // 使用现有的 getRandomString 方法生成随机字符串
+            username // 替换为随机选择的 username
         };
     });
 
