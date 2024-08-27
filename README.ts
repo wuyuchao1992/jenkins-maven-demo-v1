@@ -1,14 +1,8 @@
 import { Given, Then } from '@cucumber/cucumber';
 import { DataTable } from '@cucumber/cucumber';
 
-function generateRandomString(length: number): string {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
-}
+// 假设 getRandomString 方法已存在并导入
+import { getRandomString } from './utils';
 
 Given('I have the following user data:', function (dataTable: DataTable) {
     // 存储原始 DataTable
@@ -20,7 +14,7 @@ Given('I replace all usernames with random values', function () {
     this.modifiedDataTable = this.originalDataTable.map(row => {
         return {
             ...row,
-            username: generateRandomString(8) // 替换为8位随机字符串
+            username: getRandomString() // 使用现有的 getRandomString 方法生成随机字符串
         };
     });
 
