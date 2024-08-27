@@ -1,9 +1,25 @@
-import { Then } from '@cucumber/cucumber';
-import { BreakdownValidator } from './BreakdownValidator'; // 假设你将封装类保存在这个文件路径下
+import { MongoClient, Filter } from 'mongodb';
 
-Then('the following breakdowns should exist on the page', async function (dataTable) {
-    const validator = new BreakdownValidator(this.page);
+const uri = process.env.MONGO_URI || 'your-mongodb-connection-string';
+let client: MongoClient;
 
-    // 获取表格的第一行，并将其解析为字符串数组进行验证
-    await validator.validateBreakdownsFromString(dataTable.rows()[0][0]);
-});
+export const connectToDatabase = async () => {
+    if (!client) {
+        client = new MongoClient(uri);
+        await client.connect();
+    }
+    return client.db(process.env.DB_NAME || 'your-database-name');
+};
+
+/**
+ * 删除集合中符合条件的数据
+ * @param collectionName 集合的名称
+ * @param filter 删除操作的条件
+ * @returns 删除操作的结果
+ */
+export const deleteDataFromCollection = async (collectionName: string, filter: Filter<any> = {}) => {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    const result = await collection.deleteMany(filter);
+    return result;
+};
