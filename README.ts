@@ -1,22 +1,19 @@
-import { DataTable } from '@cucumber/cucumber'; // 确保导入 DataTable 类型
+import { DataTable } from '@cucumber/cucumber';
 
 /**
- * 将 DataTable 转换为列表的封装方法
- * @param dataTable - Cucumber 的 DataTable 对象
- * @returns 转换后的列表数组
+ * Converts a single-row DataTable to an object.
+ * @param dataTable - The Cucumber DataTable object
+ * @returns An object with key-value pairs
  */
-function dataTableToList(dataTable: DataTable): string[][] {
-  // 使用 .raw() 方法将 DataTable 转换为二维数组
-  return dataTable.raw();
+function dataTableToObject(dataTable: DataTable): Record<string, string> {
+  return dataTable.rowsHash();
 }
 
-// 示例使用
-// 假设有一个示例 DataTable
+// Example usage
 const sampleDataTable = new DataTable([
-  ['Name', 'Age'],
-  ['Alice', '30'],
-  ['Bob', '25'],
+  ['Name', 'Alice'],
+  ['Age', '30'],
 ]);
 
-const list = dataTableToList(sampleDataTable);
-console.log(list);
+const obj = dataTableToObject(sampleDataTable);
+console.log(obj); // Output: { Name: 'Alice', Age: '30' }
