@@ -29,18 +29,43 @@ async function extractTableData(page: Page, rowsCount: number): Promise<object[]
       .getByRole('cell')
       .nth(1)
       .textContent();
-    const validationType = await page
+    let validationType = await page
       .getByTestId('DrawerContent')
       .getByTestId(`row_${i}`)
       .getByRole('cell')
       .nth(2)
       .textContent();
-    const validationValue = await page
-      .getByTestId('DrawerContent')
-      .getByTestId(`row_${i}`)
-      .getByRole('cell')
-      .nth(3)
-      .textContent();
+
+    // Conditional handling based on validationType value
+    let validationValue: string | null;
+    if (['AA', 'BB', 'CC'].includes(validationType?.trim() || '')) {
+      // Extract value from input inside the validationValue cell when validationType is AA, BB, or CC
+      validationValue = await page
+        .getByTestId('DrawerContent')
+        .getByTestId(`row_${i}`)
+        .getByRole('cell')
+        .nth(3)
+        .locator('input') // Locate the input element within the cell
+        .getAttribute('value'); // Get the 'value' attribute of the input element
+    } else {
+      // Use textContent if validationType is not AA, BB, or CC
+      validationValue = await page
+        .getByTestId('DrawerContent')
+        .getByTestId(`row_${i}`)
+        .getByRole('cell')
+        .nth(3)
+        .textContent();
+    }
+
+    // Filter out the value of validationType if it is exactly '-'
+    if (validationType?.trim() === '-') {
+      validationType = ''; // Set to empty string if it equals '-'
+    }
+
+    // Filter out the value of validationValue if it is exactly '-'
+    if (validationValue?.trim() === '-') {
+      validationValue = ''; // Set to empty string if it equals '-'
+    }
 
     // Build an object for each row and push it to the tableData array
     tableData.push({
@@ -62,13 +87,12 @@ Given('I extract table data from DrawerContent and convert to DataTable', async 
     // Use or log the extracted data
     console.log('Extracted Table Data:', tableData);
 
-    // If needed, further process or use the extracted data
-    // Example of using the data directly
+    // Further process or use the extracted data if needed
     tableData.forEach((row) => {
       console.log(`Row: ${JSON.stringify(row)}`);
     });
 
-    // Optionally, return tableData if further use is required
+    // Return tableData if further use is required
     return tableData;
   } catch (error) {
     console.error('Error extracting table data:', error);
