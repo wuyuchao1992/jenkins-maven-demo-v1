@@ -2,40 +2,78 @@ import { Page } from 'playwright';
 import { DataTable } from '@cucumber/cucumber';
 
 /**
- * 从 drawer-body 中提取表格数据，并转换为 Cucumber DataTable 对象
- * @param page - Playwright 的 Page 对象
- * @returns Promise<DataTable> - 返回转换后的 DataTable 对象
+ * Extract table data from DrawerContent and convert to Cucumber DataTable hashes format
+ * @param page - Playwright Page object
+ * @param rowsCount - Number of rows to extract, provided by you
+ * @returns Promise<object[]> - Returns the data in DataTable .hashes() format
  */
-async function extractTableFromDrawerBodyToDataTable(page: Page): Promise<DataTable> {
-  // 定位到 drawer-body 中的表格
-  const tableRows = await page.$$('.drawer-body table tbody tr'); // 获取所有行元素
+async function extractTableDataToHashes(page: Page, rowsCount: number): Promise<object[]> {
+  const tableData: object[] = []; // Array to store extracted data
 
-  // 存储表头和行数据
-  const rowsData: string[][] = [];
+  // Loop through each row based on the provided row count
+  for (let i = 0; i < rowsCount; i++) {
+    // Extract values from each column
+    const name = await page
+      .getByTestId('DrawerContent')
+      .getByTestId(`row_${i}`)
+      .getByRole('cell')
+      .nth(0)
+      .textContent();
+    const type = await page
+      .getByTestId('DrawerContent')
+      .getByTestId(`row_${i}`)
+      .getByRole('cell')
+      .nth(1)
+      .textContent();
+    const validationType = await page
+      .getByTestId('DrawerContent')
+      .getByTestId(`row_${i}`)
+      .getByRole('cell')
+      .nth(2)
+      .textContent();
+    const validationValue = await page
+      .getByTestId('DrawerContent')
+      .getByTestId(`row_${i}`)
+      .getByRole('cell')
+      .nth(3)
+      .textContent();
 
-  // 添加表头
-  rowsData.push(['name', 'type', 'validationType', 'validation value']);
-
-  // 使用 for 循环逐行读取数据
-  for (const row of tableRows) {
-    // 获取行内的所有单元格元素
-    const cells = await row.$$('td');
-
-    // 读取每个单元格的文本内容
-    const rowData: string[] = [];
-    for (const cell of cells) {
-      const text = await cell.textContent(); // 获取单元格文本
-      rowData.push(text?.trim() || ''); // 去除空格并添加到行数据中
-    }
-
-    // 将读取的行数据添加到 rowsData 中
-    rowsData.push(rowData);
+    // Build an object for each row and push it to the tableData array
+    tableData.push({
+      name: name?.trim() || '', // Trim whitespace and handle empty values
+      type: type?.trim() || '',
+      validationType: validationType?.trim() || '',
+      validationValue: validationValue?.trim() || '',
+    });
   }
 
-  // 使用 rowsData 构建 DataTable
-  const dataTable = new DataTable({
-    rows: rowsData, // 将提取的表格数据添加到 DataTable
-  });
+  return import { Given } from '@cucumber/cucumber';
+import { Page } from 'playwright'; // Ensure you import Page from Playwright
+import { extractTableDataToHashes } from './your-extraction-file'; // Import the extraction function
 
-  return dataTable;
-}
+// Assume the Page object is initialized correctly and rowsCount is the number of rows
+let page: Page;
+const rowsCount = 5; // Example: the number of rows you'll provide
+
+Given('I extract table data from DrawerContent and convert to DataTable', async function () {
+  try {
+    // Extract table data and convert to hashes format
+    const tableHashes = await extractTableDataToHashes(page, rowsCount);
+
+    // Use or log the extracted data
+    console.log(tableHashes);
+
+    // If needed, convert to DataTable object for further use
+    const dataTable = new DataTable({
+      rows: tableHashes.map(row => Object.values(row)), // Convert object array to 2D array
+    });
+
+    console.log(dataTable.hashes());
+  } catch (error) {
+    console.error('Error extracting table data:', error);
+  }
+});
+
+
+
+
