@@ -1,34 +1,23 @@
-import { DataTable } from '@cucumber/cucumber';
+import { Given } from '@cucumber/cucumber';
+import { Page } from 'playwright'; // 确保从 Playwright 导入 Page
+import { extractTableFromDrawerBody } from './your-extraction-file'; // 导入提取表格数据的函数
 
-/**
- * Converts a multi-row DataTable to a list of key-value objects.
- * @param dataTable - The Cucumber DataTable object
- * @returns A list of objects representing each row of key-value pairs
- */
-function dataTableToKeyValueList(dataTable: DataTable): Record<string, string>[] {
-  // Converts the DataTable to an array of objects
-  return dataTable.hashes();
-}
+// 初始化 Playwright Page 对象（假设 Page 已经正确初始化）
+let page: Page;
 
-// Example usage with a sample DataTable
-const sampleDataTable = new DataTable([
-  ['Key', 'Value'],
-  ['Name', 'Alice'],
-  ['Age', '30'],
-  ['Name', 'Bob'],
-  ['Age', '25'],
-]);
+Given('I extract table data from the drawer-body', async function () {
+  try {
+    // 调用函数提取表格数据
+    const dataTable = await extractTableFromDrawerBody(page);
 
-const list = dataTableToKeyValueList(sampleDataTable);
+    // 使用 DataTable，例如打印数据
+    console.log(dataTable.raw());
 
-// Iterating over the list using a for loop
-for (const item of list) {
-  console.log(`Key: ${item.Key}, Value: ${item.Value}`);
-  // Perform actions based on each key-value pair
-}
-
-// Alternative iteration using a traditional for loop with index
-for (let i = 0; i < list.length; i++) {
-  const item = list[i];
-  console.log(`Key: ${item.Key}, Value: ${item.Value}`);
-}
+    // 遍历 DataTable 对象
+    dataTable.raw().forEach((row) => {
+      console.log(`Name: ${row[0]}, Type: ${row[1]}, ValidationType: ${row[2]}, Validation Value: ${row[3]}`);
+    });
+  } catch (error) {
+    console.error('Error extracting table data:', error);
+  }
+});
