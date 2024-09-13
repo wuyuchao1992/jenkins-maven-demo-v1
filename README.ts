@@ -1,100 +1,118 @@
-import { Given } from '@cucumber/cucumber';
-import { Page } from 'playwright'; // Ensure Page is imported from Playwright
+Based on the screenshots and your requirements, here is a proposed approach for designing your Playwright and Cucumber test setup, especially for adding and verifying family fields:
 
-// Assume the Page object is initialized correctly and rowsCount is the number of rows
-let page: Page;
-const rowsCount = 5; // Example: the number of rows you'll provide
+### **1. Cucumber Feature File**
+Define the steps clearly in the feature file to describe the behavior you want to automate. For instance:
 
-/**
- * Extract table data from DrawerContent and return it in a hashes format
- * @param page - Playwright Page object
- * @param rowsCount - Number of rows to extract
- * @returns Promise<object[]> - Returns the data in an array of objects
- */
-async function extractTableData(page: Page, rowsCount: number): Promise<object[]> {
-  const tableData: object[] = []; // Array to store extracted data
+```gherkin
+Feature: Manage Family Fields
 
-  // Loop through each row based on the provided row count
-  for (let i = 0; i < rowsCount; i++) {
-    // Extract values from each column
-    const name = await page
-      .getByTestId('DrawerContent')
-      .getByTestId(`row_${i}`)
-      .getByRole('cell')
-      .nth(0)
-      .textContent();
-    const type = await page
-      .getByTestId('DrawerContent')
-      .getByTestId(`row_${i}`)
-      .getByRole('cell')
-      .nth(1)
-      .textContent();
-    let validationType = await page
-      .getByTestId('DrawerContent')
-      .getByTestId(`row_${i}`)
-      .getByRole('cell')
-      .nth(2)
-      .textContent();
+  Scenario: Add multiple Family Fields and verify
+    Given I am on the Family Fields management page
+    When I add the following Family Fields:
+      | Field Name | Type   | Validation Rule Type | Rule Value |
+      | f1         | LONG   | ANY                  |            |
+      | f2         | LONG   | RANGE                | 1,2        |
+      | f3         | DOUBLE | ANY                  |            |
+      | f4         | STRING | ANY                  |            |
+      | f5         | BOOLEAN| BOOLEAN              |            |
+    Then the Family Fields should be correctly added and displayed
+```
 
-    // Conditional handling based on validationType value
-    let validationValue: string | null;
-    if (['AA', 'BB', 'CC'].includes(validationType?.trim() || '')) {
-      // Extract value from input inside the validationValue cell when validationType is AA, BB, or CC
-      validationValue = await page
-        .getByTestId('DrawerContent')
-        .getByTestId(`row_${i}`)
-        .getByRole('cell')
-        .nth(3)
-        .locator('input') // Locate the input element within the cell
-        .getAttribute('value'); // Get the 'value' attribute of the input element
-    } else {
-      // Use textContent if validationType is not AA, BB, or CC
-      validationValue = await page
-        .getByTestId('DrawerContent')
-        .getByTestId(`row_${i}`)
-        .getByRole('cell')
-        .nth(3)
-        .textContent();
-    }
+### **2. Page Object Design**
+Create a Page Object class for the Family Fields page. This will help encapsulate the interactions with the UI elements and make the code reusable and maintainable.
 
-    // Filter out the value of validationType if it is exactly '-'
-    if (validationType?.trim() === '-') {
-      validationType = ''; // Set to empty string if it equals '-'
-    }
+#### **Page Object Example (TypeScript):**
 
-    // Filter out the value of validationValue if it is exactly '-'
-    if (validationValue?.trim() === '-') {
-      validationValue = ''; // Set to empty string if it equals '-'
-    }
+```typescript
+import { Page } from 'playwright';
 
-    // Build an object for each row and push it to the tableData array
-    tableData.push({
-      name: name?.trim() || '', // Trim whitespace and handle empty values
-      type: type?.trim() || '',
-      validationType: validationType?.trim() || '',
-      validationValue: validationValue?.trim() || '',
-    });
+export class FamilyFieldsPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
   }
 
-  return tableData; // Return the extracted table data
+  // Selectors for elements on the Family Fields page
+  private addButton = this.page.locator('#add-button'); // Replace with the actual selector for the + button
+  private saveButton = this.page.locator('#save-button'); // Replace with the actual selector for the Save button
+  private fieldRow = (rowId: number) => this.page.locator(`#row_id_${rowId}`); // Selector template for rows
+  private fieldNameInput = (rowId: number) => this.fieldRow(rowId).locator('.field-name'); // Adjust the selector inside row
+  private typeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.type-dropdown');
+  private validationRuleTypeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.validation-rule-type');
+  private ruleValueInput = (rowId: number) => this.fieldRow(rowId).locator('.rule-value');
+
+  // Method to add multiple family fields based on the input data
+  async addFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
+    const currentRows = await this.page.locator('[id^="row_id_"]').count(); // Count existing rows
+    const rowsNeeded = fields.length - currentRows; // Calculate how many rows need to be added
+    for (let i = 0; i < rowsNeeded; i++) {
+      await this.addButton.click(); // Click the add button the necessary number of times
+    }
+
+    // Fill each row with the field data
+    for (let i = 0; i < fields.length; i++) {
+      await this.fieldNameInput(i).fill(fields[i].fieldName);
+      await this.typeDropdown(i).selectOption(fields[i].type);
+      await this.validationRuleTypeDropdown(i).selectOption(fields[i].validationRuleType);
+      await this.ruleValueInput(i).fill(fields[i].ruleValue);
+    }
+    await this.saveButton.click(); // Save the fields
+  }
+
+  // Method to verify each field has been correctly added
+  async verifyFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
+    for (let i = 0; i < fields.length; i++) {
+      expect(await this.fieldNameInput(i).inputValue()).toBe(fields[i].fieldName);
+      expect(await this.typeDropdown(i).inputValue()).toBe(fields[i].type);
+      expect(await this.validationRuleTypeDropdown(i).inputValue()).toBe(fields[i].validationRuleType);
+      expect(await this.ruleValueInput(i).inputValue()).toBe(fields[i].ruleValue);
+    }
+  }
 }
+```
 
-Given('I extract table data from DrawerContent and convert to DataTable', async function () {
-  try {
-    // Call the extractTableData function and retrieve the data
-    const tableData = await extractTableData(page, rowsCount);
+### **3. Step Definitions**
+Implement step definitions to tie the feature file with the Page Object methods.
 
-    // Use or log the extracted data
-    console.log('Extracted Table Data:', tableData);
+```typescript
+import { Given, When, Then } from '@cucumber/cucumber';
+import { FamilyFieldsPage } from '../pages/FamilyFieldsPage'; // Adjust the import path as necessary
+import { expect } from '@playwright/test';
 
-    // Further process or use the extracted data if needed
-    tableData.forEach((row) => {
-      console.log(`Row: ${JSON.stringify(row)}`);
-    });
+let familyFieldsPage: FamilyFieldsPage;
 
-    // Return tableData if further use is required
-    return tableData;
-  } catch (error) {
-    console.error('Error extracting table data:', error);
-  }
+Given('I am on the Family Fields management page', async function () {
+  familyFieldsPage = new FamilyFieldsPage(this.page);
+  await this.page.goto('your-url-here'); // Replace with the correct URL
 });
+
+When('I add the following Family Fields:', async function (dataTable) {
+  const fields = dataTable.rowsHash().map(row => ({
+    fieldName: row['Field Name'],
+    type: row['Type'],
+    validationRuleType: row['Validation Rule Type'],
+    ruleValue: row['Rule Value']
+  }));
+  await familyFieldsPage.addFamilyFields(fields);
+});
+
+Then('the Family Fields should be correctly added and displayed', async function (dataTable) {
+  const fields = dataTable.rowsHash().map(row => ({
+    fieldName: row['Field Name'],
+    type: row['Type'],
+    validationRuleType: row['Validation Rule Type'],
+    ruleValue: row['Rule Value']
+  }));
+  await familyFieldsPage.verifyFamilyFields(fields);
+});
+```
+
+### **Design Considerations**
+1. **Encapsulation:** The `FamilyFieldsPage` class encapsulates all interactions with the page. This keeps the step definitions clean and focused on behavior rather than implementation details.
+
+2. **Dynamic Row Handling:** The script calculates how many rows to add by comparing the current row count to the number of fields that need to be added, ensuring that the correct number of rows is created dynamically.
+
+3. **Validation:** After adding the fields, the verification method checks that each row has the expected values, ensuring data consistency.
+
+This design separates concerns, makes the code easier to maintain, and ensures that the test steps remain readable and straightforward.
