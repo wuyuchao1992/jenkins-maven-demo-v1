@@ -125,10 +125,50 @@ When('I add family and sub-family fields', async function () {
 });
 
 Then('the fields should be added correctly', async function () {
-  // 在这里进行验证操作，例如检查页面上的字段是否正确添加
-});
-```
 
-### **总结**
+import { Page } from 'playwright';
 
-以上实现将 `FamilyDetailSection` 和 `SubFamilyDetailSection` 结合在 `MainPage` 中，通过定义一个 `addFamilyAndSubFamily` 方法，您可以连贯地添加 Family 和 Sub-Family，并可以通过步骤定义进行自动化测试。
+export class FamilyFieldsPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  // Family Fields 页面元素的选择器
+  private addButton = this.page.locator('#add-button'); // 替换为 + 号按钮的实际选择器
+  private saveButton = this.page.locator('#save-button'); // 替换为保存按钮的实际选择器
+  private fieldRow = (rowId: number) => this.page.locator(`#row_id_${rowId}`); // 行的选择器模板
+  private fieldNameInput = (rowId: number) => this.fieldRow(rowId).locator('.field-name'); // 根据实际选择器调整
+  private typeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.type-dropdown');
+  private validationRuleTypeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.validation-rule-type');
+  private ruleValueInput = (rowId: number) => this.fieldRow(rowId).locator('.rule-value');
+
+  // 方法：根据输入数据添加多个 Family Fields
+  async addFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
+    const currentRows = await this.page.locator('[id^="row_id_"]').count(); // 计算现有行数
+    const rowsNeeded = fields.length - currentRows; // 计算需要添加的行数
+    for (let i = 0; i < rowsNeeded; i++) {
+      await this.addButton.click(); // 点击加号按钮，达到所需行数
+    }
+
+    // 填充每一行的数据
+    for (let i = 0; i < fields.length; i++) {
+      await this.fieldNameInput(i).fill(fields[i].fieldName);
+      await this.typeDropdown(i).selectOption(fields[i].type);
+      await this.validationRuleTypeDropdown(i).selectOption(fields[i].validationRuleType);
+      await this.ruleValueInput(i).fill(fields[i].ruleValue);
+    }
+    await this.saveButton.click(); // 保存填充的数据
+  }
+
+  // 方法：验证每个 Field 是否已正确添加
+  async verifyFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
+    for (let i = 0; i < fields.length; i++) {
+      expect(await this.fieldNameInput(i).inputValue()).toBe(fields[i].fieldName);
+      expect(await this.typeDropdown(i).inputValue()).toBe(fields[i].type);
+      expect(await this.validationRuleTypeDropdown(i).inputValue()).toBe(fields[i].validationRuleType);
+      expect(await this.ruleValueInput(i).inputValue()).toBe(fields[i].ruleValue);
+    }
+  }
+}
