@@ -1,118 +1,134 @@
-Based on the screenshots and your requirements, here is a proposed approach for designing your Playwright and Cucumber test setup, especially for adding and verifying family fields:
+要将 `FamilyDetailSection` 和 `SubFamilyDetailSection` 结合到 `MainPage` 中，您可以在 `MainPage` 中定义一个方法，用于依次调用 `FamilyDetailSection` 和 `SubFamilyDetailSection` 的操作。这样可以实现将两个操作连贯起来的效果。
 
-### **1. Cucumber Feature File**
-Define the steps clearly in the feature file to describe the behavior you want to automate. For instance:
+以下是结合 `FamilyDetailSection` 和 `SubFamilyDetailSection` 的代码示例：
 
-```gherkin
-Feature: Manage Family Fields
-
-  Scenario: Add multiple Family Fields and verify
-    Given I am on the Family Fields management page
-    When I add the following Family Fields:
-      | Field Name | Type   | Validation Rule Type | Rule Value |
-      | f1         | LONG   | ANY                  |            |
-      | f2         | LONG   | RANGE                | 1,2        |
-      | f3         | DOUBLE | ANY                  |            |
-      | f4         | STRING | ANY                  |            |
-      | f5         | BOOLEAN| BOOLEAN              |            |
-    Then the Family Fields should be correctly added and displayed
-```
-
-### **2. Page Object Design**
-Create a Page Object class for the Family Fields page. This will help encapsulate the interactions with the UI elements and make the code reusable and maintainable.
-
-#### **Page Object Example (TypeScript):**
+### **更新 MainPage.ts**
 
 ```typescript
+// pages/MainPage.ts
+import { BasePage } from './BasePage';
+import { FamilyDetailSection } from './FamilyDetailSection';
+import { SubFamilyDetailSection } from './SubFamilyDetailSection';
 import { Page } from 'playwright';
 
-export class FamilyFieldsPage {
+export class MainPage extends BasePage {
+  public familyDetail: FamilyDetailSection;
+  public subFamilyDetail: SubFamilyDetailSection;
+
+  constructor(page: Page) {
+    super(page);
+    this.familyDetail = new FamilyDetailSection(page);
+    this.subFamilyDetail = new SubFamilyDetailSection(page);
+  }
+
+  // 将 Family 和 Sub-Family 的操作连起来
+  async addFamilyAndSubFamily(
+    familyFields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[],
+    subFamilies: { subFamilyName: string; fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[] }[]
+  ) {
+    // 1. 添加 Family Fields
+    await this.familyDetail.addFamilyFields(familyFields);
+
+    // 2. 添加 Sub-Family Rows 和编辑 Sub-Family 详细信息
+    await this.subFamilyDetail.addAndEditSubFamilies(subFamilies);
+  }
+}
+```
+
+### **FamilyDetailSection.ts**
+
+确保 `FamilyDetailSection` 中有用于添加 `Family Fields` 的方法，例如 `addFamilyFields`，以便在 `MainPage` 中调用：
+
+```typescript
+// pages/FamilyDetailSection.ts
+import { Page, Locator } from 'playwright';
+
+export class FamilyDetailSection {
   readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
   }
 
-  // Selectors for elements on the Family Fields page
-  private addButton = this.page.locator('#add-button'); // Replace with the actual selector for the + button
-  private saveButton = this.page.locator('#save-button'); // Replace with the actual selector for the Save button
-  private fieldRow = (rowId: number) => this.page.locator(`#row_id_${rowId}`); // Selector template for rows
-  private fieldNameInput = (rowId: number) => this.fieldRow(rowId).locator('.field-name'); // Adjust the selector inside row
-  private typeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.type-dropdown');
-  private validationRuleTypeDropdown = (rowId: number) => this.fieldRow(rowId).locator('.validation-rule-type');
-  private ruleValueInput = (rowId: number) => this.fieldRow(rowId).locator('.rule-value');
-
-  // Method to add multiple family fields based on the input data
+  // 添加 Family Fields
   async addFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
-    const currentRows = await this.page.locator('[id^="row_id_"]').count(); // Count existing rows
-    const rowsNeeded = fields.length - currentRows; // Calculate how many rows need to be added
-    for (let i = 0; i < rowsNeeded; i++) {
-      await this.addButton.click(); // Click the add button the necessary number of times
-    }
-
-    // Fill each row with the field data
-    for (let i = 0; i < fields.length; i++) {
-      await this.fieldNameInput(i).fill(fields[i].fieldName);
-      await this.typeDropdown(i).selectOption(fields[i].type);
-      await this.validationRuleTypeDropdown(i).selectOption(fields[i].validationRuleType);
-      await this.ruleValueInput(i).fill(fields[i].ruleValue);
-    }
-    await this.saveButton.click(); // Save the fields
-  }
-
-  // Method to verify each field has been correctly added
-  async verifyFamilyFields(fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[]) {
-    for (let i = 0; i < fields.length; i++) {
-      expect(await this.fieldNameInput(i).inputValue()).toBe(fields[i].fieldName);
-      expect(await this.typeDropdown(i).inputValue()).toBe(fields[i].type);
-      expect(await this.validationRuleTypeDropdown(i).inputValue()).toBe(fields[i].validationRuleType);
-      expect(await this.ruleValueInput(i).inputValue()).toBe(fields[i].ruleValue);
+    for (const field of fields) {
+      // 逻辑：添加每个 Family Field 的代码，如点击 + 号并填写信息
+      // 示例：
+      await this.page.locator('#add-family-field-button').click(); // 替换为实际选择器
+      // 填写字段逻辑
     }
   }
 }
 ```
 
-### **3. Step Definitions**
-Implement step definitions to tie the feature file with the Page Object methods.
+### **SubFamilyDetailSection.ts**
+
+确保 `SubFamilyDetailSection` 中有方法用于添加和编辑 `Sub-Family`，例如 `addAndEditSubFamilies`：
+
+```typescript
+// pages/SubFamilyDetailSection.ts
+import { Page, Locator } from 'playwright';
+
+export class SubFamilyDetailSection {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  // 添加 Sub-Family Rows 并编辑详细信息
+  async addAndEditSubFamilies(subFamilies: { subFamilyName: string; fields: { fieldName: string; type: string; validationRuleType: string; ruleValue: string }[] }[]) {
+    // 根据需要的 Sub-Family 行数，点击 + 号
+    for (let i = 0; i < subFamilies.length; i++) {
+      await this.page.locator('#add-sub-family-button').click(); // 替换为实际选择器
+      // 编辑每一行 Sub-Family 的逻辑
+    }
+  }
+}
+```
+
+### **使用示例**
+
+在 Step Definitions 中使用 `MainPage` 来调用该方法：
 
 ```typescript
 import { Given, When, Then } from '@cucumber/cucumber';
-import { FamilyFieldsPage } from '../pages/FamilyFieldsPage'; // Adjust the import path as necessary
+import { MainPage } from '../pages/MainPage'; // 根据实际路径调整
 import { expect } from '@playwright/test';
 
-let familyFieldsPage: FamilyFieldsPage;
+let mainPage: MainPage;
 
-Given('I am on the Family Fields management page', async function () {
-  familyFieldsPage = new FamilyFieldsPage(this.page);
-  await this.page.goto('your-url-here'); // Replace with the correct URL
+Given('I am on the main page', async function () {
+  mainPage = new MainPage(this.page); // 假设 this.page 是 Playwright 的 Page 对象
 });
 
-When('I add the following Family Fields:', async function (dataTable) {
-  const fields = dataTable.rowsHash().map(row => ({
-    fieldName: row['Field Name'],
-    type: row['Type'],
-    validationRuleType: row['Validation Rule Type'],
-    ruleValue: row['Rule Value']
-  }));
-  await familyFieldsPage.addFamilyFields(fields);
+When('I add family and sub-family fields', async function () {
+  const familyFields = [
+    { fieldName: 'f1', type: 'LONG', validationRuleType: 'ANY', ruleValue: '' },
+    { fieldName: 'f2', type: 'LONG', validationRuleType: 'RANGE', ruleValue: '1,2' },
+    // 添加更多 Family Fields...
+  ];
+
+  const subFamilies = [
+    {
+      subFamilyName: 'SubFamily1',
+      fields: [
+        { fieldName: 'f1', type: 'STRING', validationRuleType: 'ANY', ruleValue: '' },
+        // 添加更多 Sub-Family Fields...
+      ],
+    },
+    // 添加更多 Sub-Families...
+  ];
+
+  await mainPage.addFamilyAndSubFamily(familyFields, subFamilies);
 });
 
-Then('the Family Fields should be correctly added and displayed', async function (dataTable) {
-  const fields = dataTable.rowsHash().map(row => ({
-    fieldName: row['Field Name'],
-    type: row['Type'],
-    validationRuleType: row['Validation Rule Type'],
-    ruleValue: row['Rule Value']
-  }));
-  await familyFieldsPage.verifyFamilyFields(fields);
+Then('the fields should be added correctly', async function () {
+  // 在这里进行验证操作，例如检查页面上的字段是否正确添加
 });
 ```
 
-### **Design Considerations**
-1. **Encapsulation:** The `FamilyFieldsPage` class encapsulates all interactions with the page. This keeps the step definitions clean and focused on behavior rather than implementation details.
+### **总结**
 
-2. **Dynamic Row Handling:** The script calculates how many rows to add by comparing the current row count to the number of fields that need to be added, ensuring that the correct number of rows is created dynamically.
-
-3. **Validation:** After adding the fields, the verification method checks that each row has the expected values, ensuring data consistency.
-
-This design separates concerns, makes the code easier to maintain, and ensures that the test steps remain readable and straightforward.
+以上实现将 `FamilyDetailSection` 和 `SubFamilyDetailSection` 结合在 `MainPage` 中，通过定义一个 `addFamilyAndSubFamily` 方法，您可以连贯地添加 Family 和 Sub-Family，并可以通过步骤定义进行自动化测试。
