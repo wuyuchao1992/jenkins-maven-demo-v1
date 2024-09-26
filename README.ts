@@ -1,27 +1,32 @@
-Here's the email translated into English:
+import { Page } from '@playwright/test';
 
----
+export class TablePage {
+  readonly page: Page;
 
-**Subject**: Risk Assessment for JIRA Number: xxxx Release to Production
+  constructor(page: Page) {
+    this.page = page;
+  }
 
-Dear [Leader's Name],
+  // 根据表头 ID 直接找到列索引
+  async getColumnIndexByHeaderId(headerId: string): Promise<number> {
+    const headerLocator = this.page.locator(`#${headerId}`);
+    const columnIndex = await headerLocator.evaluate((el) => Array.from(el.parentNode!.children).indexOf(el));
+    return columnIndex;
+  }
 
-I would like to report the current status of JIRA number: xxxx and highlight potential risks if this feature is released to production.
+  // 根据列索引和行索引找到 tooltip
+  async printTooltipInRowByHeaderId(headerId: string, rowIndex: number) {
+    // 获取列索引
+    const columnIndex = await this.getColumnIndexByHeaderId(headerId);
 
-1. **Insufficient Testing**: This feature was merged into the master branch without undergoing sufficient testing. There is a significant potential risk that unforeseen issues may arise in the production environment.
+    // 根据行索引和列索引定位单元格
+    const cellLocator = this.page.locator(`tbody tr:nth-child(${rowIndex + 1}) td:nth-child(${columnIndex + 1})`);
 
-2. **Does Not Fully Meet Requirements**: After several days of testing, the current version still does not fully meet the expected requirements. The feature is unstable and does not align with business objectives.
-
-Based on these points, I believe that releasing this feature to production carries high risks. I recommend postponing the release until these issues are resolved. If needed, I can organize further testing and adjustments to ensure the quality and stability of the feature.
-
-Please review the above and provide your feedback and guidance.
-
-Thank you!
-
-Best regards,  
-[Your Name]  
-[Your Position]  
-
----
-
-Feel free to adjust the content as necessary based on the specific situation.
+    // 假设 tooltip 位于单元格内的某个 div > span
+    const tooltipLocator = cellLocator.locator('div > span');
+    
+    // 获取并打印 tooltip 文本内容
+    const tooltipText = await tooltipLocator.textContent();
+    console.log(`Tooltip in row ${rowIndex + 1}, column with ID "${headerId}":`, tooltipText);
+  }
+}
