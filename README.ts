@@ -1,37 +1,26 @@
-import com.mongodb.MongoClient
-import com.mongodb.client.MongoDatabase
+Here’s the simplified Jira performance testing description and acceptance criteria (AC) in English, focusing on concurrency from 10 to 100 and ensuring no errors occur.
 
-// 配置 MongoDB 连接参数
-String mongoHost = "localhost"
-int mongoPort = 27017
-String databaseName = "yourDatabaseName"
+### **Jira Description Example**
 
-// 正则表达式用于匹配集合名称
-String regexPattern = /yourRegexPattern/
+**Task Name**: DataHub Performance Testing - Schema Creation, Data Insertion, and Querying
 
-MongoClient mongoClient = null
+**Description**:  
+Test the performance of DataHub under 10 to 100 concurrent users when performing schema creation, single and bulk data insertions, and data querying, ensuring no errors occur.
 
-try {
-    // 连接到 MongoDB
-    mongoClient = new MongoClient(mongoHost, mongoPort)
-    MongoDatabase database = mongoClient.getDatabase(databaseName)
+### **Acceptance Criteria (AC)**
 
-    // 获取数据库中的所有集合名称
-    def collections = database.listCollectionNames()
+1. **Schema Creation**
+   - **AC1**: Schema creation should successfully complete with no errors under 10 to 100 concurrent users.
 
-    // 循环检查集合名称是否匹配正则表达式
-    collections.each { collectionName ->
-        if (collectionName ==~ regexPattern) {  // 使用正则表达式匹配
-            // 删除匹配的集合
-            database.getCollection(collectionName).drop()
-            log.info("Dropped collection: " + collectionName)
-        }
-    }
+2. **Single Data Insertion**
+   - **AC2**: Single data insertion operations should execute successfully with no errors under 10 to 100 concurrent users.
 
-} catch (Exception e) {
-    log.error("Error occurred while dropping collections from MongoDB: " + e.message)
-} finally {
-    if (mongoClient != null) {
-        mongoClient.close()
-    }
-}
+3. **Bulk Data Insertion**
+   - **AC3**: Bulk data insertion operations should complete successfully with no errors under 10 to 100 concurrent users.
+
+4. **Data Querying**
+   - **AC4**: Data querying should return correct results with no errors under 10 to 100 concurrent users.
+
+---
+
+This version focuses on the concurrency range and ensures no errors during execution.
