@@ -1,26 +1,36 @@
-Here’s the simplified Jira performance testing description and acceptance criteria (AC) in English, focusing on concurrency from 10 to 100 and ensuring no errors occur.
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import java.util.regex.Pattern;
 
-### **Jira Description Example**
+// MongoDB 连接字符串
+String uri = "mongodb://username:password@localhost:27017";
+MongoClient mongoClient = MongoClients.create(uri);
 
-**Task Name**: DataHub Performance Testing - Schema Creation, Data Insertion, and Querying
+// 选择数据库
+MongoDatabase database = mongoClient.getDatabase("yourDatabase");
 
-**Description**:  
-Test the performance of DataHub under 10 to 100 concurrent users when performing schema creation, single and bulk data insertions, and data querying, ensuring no errors occur.
+// 根据 key 创建正则表达式模式
+String key = "yourKey";
+Pattern pattern = Pattern.compile(".*" + key + ".*");
 
-### **Acceptance Criteria (AC)**
+// 删除匹配模式的集合
+for (String collectionName : database.listCollectionNames()) {
+    if (pattern.matcher(collectionName).matches()) {
+        database.getCollection(collectionName).drop();
+        log.info("Dropped collection: " + collectionName);
+    }
+}
 
-1. **Schema Creation**
-   - **AC1**: Schema creation should successfully complete with no errors under 10 to 100 concurrent users.
+// 指定要操作的集合
+MongoCollection<Document> collection = database.getCollection("A");
 
-2. **Single Data Insertion**
-   - **AC2**: Single data insertion operations should execute successfully with no errors under 10 to 100 concurrent users.
+// 删除集合中匹配正则表达式的文档
+collection.deleteMany(Filters.regex("yourField", pattern));
+log.info("Deleted documents from collection A where field matches pattern: " + pattern);
 
-3. **Bulk Data Insertion**
-   - **AC3**: Bulk data insertion operations should complete successfully with no errors under 10 to 100 concurrent users.
-
-4. **Data Querying**
-   - **AC4**: Data querying should return correct results with no errors under 10 to 100 concurrent users.
-
----
-
-This version focuses on the concurrency range and ensures no errors during execution.
+// 关闭客户端连接
+mongoClient.close();
