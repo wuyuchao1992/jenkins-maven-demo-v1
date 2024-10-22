@@ -1,34 +1,35 @@
-Here is the updated Jira story translated into English:
+import org.json.JSONObject;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
----
+public class TokenExtractor {
 
-**Story Title:** Fix the issue of API response time exceeding standards under concurrent conditions
+    public static String extractTokenFromResponse(ResponseEntity<String> response) {
+        // 获取响应体的内容
+        String responseBody = response.getBody();
 
-**Description:**
+        // 使用 JSONObject 解析响应体
+        JSONObject jsonResponse = new JSONObject(responseBody);
 
-We have identified that the system does not meet the expected API response time standards under high concurrency, affecting the performance of bulk data insertion and data queries. The issues are as follows:
+        // 提取 data.token 字段
+        String token = jsonResponse.getJSONObject("data").getString("token");
 
-- **Issue 1:** When the concurrency is **10-40**, the response time for the bulk data insertion API exceeds the expected standard (should be under 1 second).
-- **Issue 2:** When the concurrency is **50-100**, the response time for the data query API exceeds the expected standard (should be under 2 seconds).
+        // 返回 token
+        return token;
+    }
 
-To improve the stability and response speed of the system under high concurrency, it is necessary to investigate and optimize the following issues.
+    public static void main(String[] args) {
+        // 假设我们要发送登录请求并获取 token
+        RestTemplate restTemplate = new RestTemplate();
+        String loginUrl = "https://example.com/api/login";
+        
+        // 模拟发送 POST 请求并获取响应 (此处省略了请求的具体细节)
+        ResponseEntity<String> response = restTemplate.getForEntity(loginUrl, String.class);
 
-**Acceptance Criteria:**
+        // 从响应中提取 token
+        String token = extractTokenFromResponse(response);
 
-1. For the bulk data insertion API, when the concurrency is **10-40**, the response time should be between **500 milliseconds and 1 second**, and must not exceed **1 second**.
-2. For the data query API, when the concurrency is **50-100**, the response time should be between **1 second and 2 seconds**, and must not exceed **2 seconds**.
-3. Complete the necessary performance optimizations, including database query optimization, concurrency control mechanisms, and API load distribution strategies.
-4. Provide a performance test report to ensure that after the fixes, the APIs perform as expected under high concurrency.
-
-**Priority:** High
-
-**Estimate:** [Fill in estimated time]
-
-**Additional Notes:**
-
-- Collaborate with the performance testing team and backend development team to analyze performance bottlenecks.
-- Ensure that the optimization does not affect existing functionality and thoroughly validate the system's stability.
-
----
-
-This version provides the performance standards in English and retains the clear acceptance criteria and optimization tasks.
+        // 输出提取到的 token
+        System.out.println("Token: " + token);
+    }
+}
