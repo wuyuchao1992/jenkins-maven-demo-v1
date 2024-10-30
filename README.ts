@@ -1,22 +1,17 @@
-export class MyPage {
-  private page: Page;
+import { test, expect } from '@playwright/test';
 
-  constructor(page: Page) {
-    this.page = page;
-  }
+test('find cell based on text and return content', async ({ page }) => {
+  // 打开页面
+  await page.goto('https://example.com');
 
-  // 方法：使用正则表达式部分匹配并查找同层的 span 元素
-  async getCellLocatorWithRegex(fieldName: string): Promise<Locator> {
-    // 使用正则表达式部分匹配文本
-    const cellLocator = this.page.locator(new RegExp(fieldName, 'i'));
+  // 根据指定的文本定位到包含该文本的单元格（<td> 或 <th>）
+  const cellLocator = page.locator('table td', { hasText: '目标文本' });
 
-    // 使用 previous-sibling 查找同层的上一个兄弟元素 span
-    const spanLocator = cellLocator.locator('xpath=preceding-sibling::span');
+  // 获取单元格内的文本内容
+  const cellContent = await cellLocator.textContent();
 
-    // 打印并返回 span 的 locator
-    console.log(`Cell Locator: ${cellLocator}`);
-    console.log(`Span Locator (for asterisk): ${spanLocator}`);
+  console.log('Cell content:', cellContent);
 
-    return spanLocator;
-  }
-}
+  // 断言或其他操作
+  expect(cellContent).toContain('期望内容');
+});
