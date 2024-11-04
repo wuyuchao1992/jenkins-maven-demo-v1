@@ -2,6 +2,7 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.apache.jmeter.samplers.SampleResult
@@ -9,8 +10,12 @@ import org.apache.jmeter.samplers.SampleResult
 // 获取当前 SampleResult 对象
 SampleResult result = new SampleResult()
 
-// 设置 WebDriver
-WebDriver driver = new ChromeDriver() // 也可以选择 FirefoxDriver()
+// 配置 ChromeOptions
+ChromeOptions options = new ChromeOptions()
+options.addArguments("--remote-allow-origins=*")
+
+// 设置 WebDriver，并传入选项
+WebDriver driver = new ChromeDriver(options)
 
 try {
     // 记录采样的开始时间
