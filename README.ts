@@ -1,21 +1,8 @@
-<plugin>
-    <groupId>com.lazerycode.jmeter</groupId>
-    <artifactId>jmeter-maven-plugin</artifactId>
-    <version>3.3.0</version>
-    <executions>
-        <execution>
-            <id>jmeter-tests</id>
-            <goals>
-                <goal>jmeter</goal>
-            </goals>
-        </execution>
-    </executions>
-    <dependencies>
-        <!-- 添加 JMeter WebDriver 插件依赖 -->
-        <dependency>
-            <groupId>kg.apc</groupId>
-            <artifactId>jmeter-plugins-webdriver</artifactId>
-            <version>3.3</version>
-        </dependency>
-    </dependencies>
-</plugin>
+var chromeOptions = new org.openqa.selenium.chrome.ChromeOptions();
+chromeOptions.addArguments("--remote-allow-origins=*"); // 添加参数
+
+var capabilities = org.openqa.selenium.remote.DesiredCapabilities.chrome();
+capabilities.setCapability(org.openqa.selenium.chrome.ChromeOptions.CAPABILITY, chromeOptions);
+
+// 启动带有指定参数的 ChromeDriver
+WDS.browser = new org.openqa.selenium.chrome.ChromeDriver(capabilities);
