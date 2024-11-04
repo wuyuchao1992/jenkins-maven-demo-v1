@@ -1,3 +1,21 @@
-Purpose
-
-The purpose of this checklist is to prevent any testing omissions during the migration from the development environment to the UAT environment. It ensures that all critical functions and configuration items are thoroughly verified, reducing the risk of issues before going live.
+<plugin>
+    <groupId>com.lazerycode.jmeter</groupId>
+    <artifactId>jmeter-maven-plugin</artifactId>
+    <version>3.3.0</version>
+    <executions>
+        <execution>
+            <id>jmeter-tests</id>
+            <goals>
+                <goal>jmeter</goal>
+            </goals>
+        </execution>
+    </executions>
+    <dependencies>
+        <!-- 添加 JMeter WebDriver 插件依赖 -->
+        <dependency>
+            <groupId>kg.apc</groupId>
+            <artifactId>jmeter-plugins-webdriver</artifactId>
+            <version>3.3</version>
+        </dependency>
+    </dependencies>
+</plugin>
