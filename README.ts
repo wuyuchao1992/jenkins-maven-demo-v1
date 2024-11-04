@@ -1,23 +1,28 @@
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
+import org.apache.jmeter.samplers.SampleResult
 
-// 配置 WebDriver
-// 可以选择 FirefoxDriver 或 ChromeDriver，根据需求调整
-WebDriver driver = new ChromeDriver() // 或 FirefoxDriver()
+// 获取当前 SampleResult 对象
+SampleResult result = new SampleResult()
+
+// 设置 WebDriver
+WebDriver driver = new ChromeDriver() // 也可以选择 FirefoxDriver()
 
 try {
-    // 设置等待时间
-    WebDriverWait wait = new WebDriverWait(driver, 10)
+    // 记录采样的开始时间
+    result.sampleStart()
 
     // 打开网址
     driver.get("https://example.com")
 
-    // 查找元素并进行操作
+    // 设置等待
+    WebDriverWait wait = new WebDriverWait(driver, 10)
+
+    // 查找元素并点击
     WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("example-id")))
     element.click()
 
@@ -25,19 +30,34 @@ try {
     String title = driver.getTitle()
     log.info("页面标题: " + title)
 
-    // 执行其他操作
+    // 执行其他操作，例如填写表单字段
     WebElement inputField = driver.findElement(By.name("example-name"))
     inputField.sendKeys("Test Input")
 
     // 提交表单
     WebElement submitButton = driver.findElement(By.id("submit"))
     submitButton.click()
-    
-    // 验证某个元素是否出现
+
+    // 验证成功信息出现
     WebElement successMessage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("success")))
     log.info("成功信息: " + successMessage.getText())
 
+    // 记录采样成功
+    result.setSuccessful(true)
+    result.setResponseMessage("操作成功")
+    result.setResponseCodeOK()
+
+} catch (Exception e) {
+    // 记录采样失败
+    result.setSuccessful(false)
+    result.setResponseMessage("操作失败: " + e.getMessage())
+    result.setResponseCode("500")
+    log.error("错误: ", e)
+
 } finally {
+    // 记录采样的结束时间
+    result.sampleEnd()
+    
     // 关闭浏览器
     driver.quit()
 }
