@@ -1,17 +1,23 @@
-import org.apache.jmeter.services.FileServer
-import java.nio.file.*
+<dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.3.2</version> 
+</dependency>
 
-// 获取当前脚本所在目录
-def scriptDir = FileServer.getFileServer().getBaseDir()
 
-// 定义文件路径，相对于脚本所在目录
-def filePath = scriptDir + "/yourfile.txt"
+import io.github.bonigarcia.wdm.WebDriverManager
+import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.ChromeOptions
 
-// 清空文件内容
-Files.write(Paths.get(filePath), new byte[0])
+// 使用 WebDriverManager 自动配置 chromedriver
+WDS.sampleResult.sampleStart()
+WebDriverManager.chromedriver().setup()
 
-// 获取接口返回的ID
-def id = vars.get("response_id")
+ChromeOptions options = new ChromeOptions()
+options.addArguments("--headless") // 在 CI/CD 中运行无界面模式
+options.addArguments("--no-sandbox")
+options.addArguments("--disable-dev-shm-usage")
 
-// 写入新的ID
-Files.write(Paths.get(filePath), id.bytes, StandardOpenOption.APPEND)
+WDS.browser = new ChromeDriver(options)
+WDS.browser.get("https://example.com")
+WDS.sampleResult.sampleEnd()
