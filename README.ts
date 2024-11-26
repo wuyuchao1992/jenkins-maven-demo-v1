@@ -1,40 +1,25 @@
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.apache.poi.ss.usermodel.Sheet
+pipeline {
+    agent any
+    stages {
+        stage('Run JMeter Tests') {
+            steps {
+                script {
+                    // 运行 JMeter 测试
+                    sh 'mvn clean verify'
 
-// Configure file size (in MB)
-int sizeInMB = 5 // Change to the desired size
+                    // 解析 JMeter 的结果文件
+                    def jtlFile = "target/jmeter/results.jtl"  // JTL 文件路径
+                    def failedAssertions = sh(
+                        script: "grep '<failure>true</failure>' ${jtlFile} | wc -l",
+                        returnStdout: true
+                    ).trim()
 
-// Convert size to bytes
-int sizeInBytes = sizeInMB * 1024 * 1024
-
-// Specify the file path
-String filePath = "testFile.xlsx" // File name, can be customized
-
-// Create a new workbook and sheet
-XSSFWorkbook workbook = new XSSFWorkbook()
-Sheet sheet = workbook.createSheet("Sheet1")
-
-// Fill the sheet with data until the specified size is reached
-int rowCount = 0
-while (true) {
-    def row = sheet.createRow(rowCount++)
-    for (int col = 0; col < 10; col++) {
-        row.createCell(col).setCellValue("Sample Data")
+                    // 如果有断言失败，标记当前阶段为失败
+                    if (failedAssertions.toInteger() > 0) {
+                        error "JMeter tests failed with ${failedAssertions} failed assertions."
+                    }
+                }
+            }
+        }
     }
-    // Check the file size
-    ByteArrayOutputStream baos = new ByteArrayOutputStream()
-    workbook.write(baos)
-    if (baos.size() >= sizeInBytes) {
-        baos.close()
-        break
-    }
-    baos.close()
 }
-
-// Write the data to the file
-FileOutputStream fos = new FileOutputStream(filePath)
-workbook.write(fos)
-fos.close()
-workbook.close()
-
-log.info("Excel file of size ${sizeInMB}MB generated at: ${filePath}")
