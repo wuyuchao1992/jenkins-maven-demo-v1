@@ -1,98 +1,155 @@
-// Page Object定义
-class TablePage {
-  private page: playwright.Page;
+import { Page } from '@playwright/test';
 
-  constructor(page: playwright.Page) {
+/**
+ * REPRESENTATION OF CORE DOMAIN MODEL
+ * 
+ * FinancialData: Raw string values preserve original formatting
+ * CategoryData: Hierarchical structure mirrors table organization
+ * TableData: Complete dataset with top-level categories
+ */
+interface FinancialData {
+  actual_2023: string;
+  actual_2024: string;
+  budget_2024: string;
+  forecast_2024: string;
+  forecast_2025: string;
+}
+
+interface CategoryData {
+  [subCategory: string]: FinancialData;
+}
+
+interface TableData {
+  [category: string]: CategoryData;
+}
+
+/**
+ * CONFIGURATION MANAGEMENT
+ * 
+ * Default categories can be overridden without modifying core logic
+ * 'as const' ensures type inference as readonly tuple
+ */
+const DEFAULT_MAIN_CATEGORIES = ['Total', 'GZ', 'SZ', 'BJ'] as const;
+
+export class BudgetPage {
+  /**
+   * STATE ENCAPSULATION
+   * 
+   * - readonly modifiers enforce immutability
+   * - locators centralized for single source of truth
+   */
+  private readonly page: Page;
+  private readonly tableLocator = 'table';
+  private mainCategories: readonly string[];
+
+  /**
+   * FLEXIBLE CONSTRUCTION
+   * 
+   * - Dependency injection for page instance
+   * - Optional configuration override for categories
+   */
+  constructor(page: Page, mainCategories = DEFAULT_MAIN_CATEGORIES) {
     this.page = page;
+    this.mainCategories = mainCategories;
   }
 
-  // 获取表格数据的主方法
-  async getData(): Promise<NestedData> {
-    await this.waitForTableLoad();
+  /**
+   * MAIN ENTRY POINT
+   * 
+   * - Single async operation for performance
+   * - Clear separation between data fetch and parsing
+   */
+  async getTableData(): Promise<TableData> {
+    const table = this.page.locator(this.tableLocator);
+    const tableText = await table.locator('tr').allInnerTexts();
     
-    const rawRows = this.extractRawTableData();
-    return this.processData(rawRows);
+    return this.parseTableData(tableText);
   }
 
-  private waitForTableLoad(): Promise<void> {
-    return this.page.waitForSelector('table', { state: 'visible' });
-  }
+  /**
+   * DATA TRANSFORMATION PIPELINE
+   * 
+   * - Pure function with input/output transparency
+   * - Linear workflow with clear failure points
+   * - State managed through local variables
+   */
+  private parseTableData(tableText: string[]): TableData {
+    const result: TableData = {};
+    let currentCategory = '';
 
-  private extractRawTableData(): string[][] {
-    return this.page.$$eval('table tr', rows => 
-      rows.slice(2) // 跳过表头
-        .map(row => Array.from(row.querySelectorAll('td, th')).map(cell => cell.textContent.trim())))
-    );
-  }
+    for (const row of tableText) {
+      const cells = row.split('\t').map(c => this.cleanCellContent(c));
+      if (cells.length === 0) continue;
 
-  private processData(rawRows: string[][]): NestedData {
-    const nestedData: NestedData = {};
-    let currentCategory: string | null = null;
+      const firstCell = cells[0];
+      
+      if (this.isMainCategory(firstCell)) {
+        currentCategory = firstCell;
+        result[currentCategory] = {};
+        continue;
+      }
 
-    for (const row of rawRows) {
-      if (this.isEmptyRow(row)) {
-        currentCategory = null;
-      } else if (this.isCategoryRow(row)) {
-        currentCategory = row[0];
-        nestedData[currentCategory] = {};
-      } else if (currentCategory && row.length >= 6) {
-        try {
-          const yearlyData = this.parseYearlyData(row);
-          const name = row[0];
-          nestedData[currentCategory][name] = yearlyData;
-        } catch (error) {
-          console.error(`Invalid data row: ${JSON.stringify(row)}`, error);
-        }
-      } else {
-        console.warn(`Unexpected row format:`, row);
+      if (this.isCategorySeparator(firstCell)) {
+        currentCategory = '';
+        continue;
+      }
+
+      if (currentCategory && this.isDataRow(cells)) {
+        this.processDataRow(cells, result[currentCategory]);
       }
     }
 
-    return nestedData;
+    return result;
   }
 
-  private isEmptyRow(row: string[]): boolean {
-    return row.length === 0 || row.every(cell => cell === '');
+  /**
+   * DATA SANITIZATION
+   * 
+   * - Centralized cleaning logic
+   * - Preserves data integrity while normalizing whitespace
+   */
+  private cleanCellContent(content: string): string {
+    return content
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  private isCategoryRow(row: string[]): boolean {
-    return !this.isEmptyRow(row) && row[0] !== '' && row.slice(1).every(cell => cell === '');
+  /**
+   * PREDICATE FUNCTIONS
+   * 
+   * - Self-documenting condition checks
+   * - Single responsibility for each check
+   * - Enables easy modification of criteria
+   */
+  private isMainCategory(content: string): boolean {
+    return this.mainCategories.includes(content);
   }
 
-  private parseYearlyData(row: string[]): YearlyData {
-    return {
-      actual_2023: parseInt(row[1]),
-      actual_2024: parseInt(row[2]),
-      budget_2024: parseInt(row[3]),
-      forecast_2024: parseInt(row[4]),
-      forecast_2025: parseInt(row[5])
+  private isCategorySeparator(content: string): boolean {
+    return content === '' && !this.mainCategories.includes(content);
+  }
+
+  private isDataRow(cells: string[]): boolean {
+    return cells.length === 6;
+  }
+
+  /**
+   * DATA MAPPING
+   * 
+   * - Clear field assignment
+   * - Defensive empty string fallbacks
+   * - Structural consistency in output
+   */
+  private processDataRow(cells: string[], categoryData: CategoryData): void {
+    const [subCategory, ...values] = cells;
+    
+    categoryData[subCategory] = {
+      actual_2023: values[0] || '',
+      actual_2024: values[1] || '',
+      budget_2024: values[2] || '',
+      forecast_2024: values[3] || '',
+      forecast_2025: values[4] || ''
     };
   }
 }
-
-// 使用示例
-(async () => {
-  const browser = await playwright.launch({ headless: false });
-  const page = await browser.newPage();
-  await page.goto('https://your-table-page.com');
-  
-  try {
-    const tablePage = new TablePage(page);
-    const data = await tablePage.getData();
-    
-    // 示例断言
-    expect(data['Total']['AA']).toEqual({
-      actual_2023: 1,
-      actual_2024: 2,
-      budget_2024: 3,
-      forecast_2024: 4,
-      forecast_2025: 5
-    });
-    
-    console.log(JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Data extraction failed:', error);
-  } finally {
-    await browser.close();
-  }
-})();
