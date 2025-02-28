@@ -1,155 +1,173 @@
-import { Page } from '@playwright/test';
+在 Cucumber.js 中合并并行和串行执行的测试报告，尤其是使用 `@cucumber/pretty-formatter`（默认终端格式化输出）时，需要借助 **支持报告文件合并的工具**。以下是分步实现方案：
 
-/**
- * REPRESENTATION OF CORE DOMAIN MODEL
- * 
- * FinancialData: Raw string values preserve original formatting
- * CategoryData: Hierarchical structure mirrors table organization
- * TableData: Complete dataset with top-level categories
- */
-interface FinancialData {
-  actual_2023: string;
-  actual_2024: string;
-  budget_2024: string;
-  forecast_2024: string;
-  forecast_2025: string;
-}
+---
 
-interface CategoryData {
-  [subCategory: string]: FinancialData;
-}
+### **1. 核心思路**
+1. **生成结构化报告文件**（如 JSON、HTML），而非仅依赖终端输出。
+2. **分别保存并行和串行测试的报告文件**。
+3. **合并报告文件**，生成统一的可视化报告。
 
-interface TableData {
-  [category: string]: CategoryData;
-}
+---
 
-/**
- * CONFIGURATION MANAGEMENT
- * 
- * Default categories can be overridden without modifying core logic
- * 'as const' ensures type inference as readonly tuple
- */
-const DEFAULT_MAIN_CATEGORIES = ['Total', 'GZ', 'SZ', 'BJ'] as const;
+### **2. 推荐工具**
+| 工具                          | 作用                              |
+|------------------------------|---------------------------------|
+| `@cucumber/json-formatter`    | 生成 JSON 格式的原始测试报告         |
+| `cucumber-html-reporter`      | 将 JSON 报告转换为 HTML 可视化报告   |
+| `json-report-merger`          | 合并多个 JSON 报告文件              |
 
-export class BudgetPage {
-  /**
-   * STATE ENCAPSULATION
-   * 
-   * - readonly modifiers enforce immutability
-   * - locators centralized for single source of truth
-   */
-  private readonly page: Page;
-  private readonly tableLocator = 'table';
-  private mainCategories: readonly string[];
+---
 
-  /**
-   * FLEXIBLE CONSTRUCTION
-   * 
-   * - Dependency injection for page instance
-   * - Optional configuration override for categories
-   */
-  constructor(page: Page, mainCategories = DEFAULT_MAIN_CATEGORIES) {
-    this.page = page;
-    this.mainCategories = mainCategories;
-  }
+### **3. 实现步骤**
 
-  /**
-   * MAIN ENTRY POINT
-   * 
-   * - Single async operation for performance
-   * - Clear separation between data fetch and parsing
-   */
-  async getTableData(): Promise<TableData> {
-    const table = this.page.locator(this.tableLocator);
-    const tableText = await table.locator('tr').allInnerTexts();
-    
-    return this.parseTableData(tableText);
-  }
+#### **(1) 安装依赖**
+```bash
+npm install @cucumber/json-formatter cucumber-html-reporter json-report-merger --save-dev
+```
 
-  /**
-   * DATA TRANSFORMATION PIPELINE
-   * 
-   * - Pure function with input/output transparency
-   * - Linear workflow with clear failure points
-   * - State managed through local variables
-   */
-  private parseTableData(tableText: string[]): TableData {
-    const result: TableData = {};
-    let currentCategory = '';
+#### **(2) 生成 JSON 报告**
+修改测试命令，为并行和串行测试分别生成 JSON 报告：
 
-    for (const row of tableText) {
-      const cells = row.split('\t').map(c => this.cleanCellContent(c));
-      if (cells.length === 0) continue;
-
-      const firstCell = cells[0];
-      
-      if (this.isMainCategory(firstCell)) {
-        currentCategory = firstCell;
-        result[currentCategory] = {};
-        continue;
-      }
-
-      if (this.isCategorySeparator(firstCell)) {
-        currentCategory = '';
-        continue;
-      }
-
-      if (currentCategory && this.isDataRow(cells)) {
-        this.processDataRow(cells, result[currentCategory]);
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * DATA SANITIZATION
-   * 
-   * - Centralized cleaning logic
-   * - Preserves data integrity while normalizing whitespace
-   */
-  private cleanCellContent(content: string): string {
-    return content
-      .replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  /**
-   * PREDICATE FUNCTIONS
-   * 
-   * - Self-documenting condition checks
-   * - Single responsibility for each check
-   * - Enables easy modification of criteria
-   */
-  private isMainCategory(content: string): boolean {
-    return this.mainCategories.includes(content);
-  }
-
-  private isCategorySeparator(content: string): boolean {
-    return content === '' && !this.mainCategories.includes(content);
-  }
-
-  private isDataRow(cells: string[]): boolean {
-    return cells.length === 6;
-  }
-
-  /**
-   * DATA MAPPING
-   * 
-   * - Clear field assignment
-   * - Defensive empty string fallbacks
-   * - Structural consistency in output
-   */
-  private processDataRow(cells: string[], categoryData: CategoryData): void {
-    const [subCategory, ...values] = cells;
-    
-    categoryData[subCategory] = {
-      actual_2023: values[0] || '',
-      actual_2024: values[1] || '',
-      budget_2024: values[2] || '',
-      forecast_2024: values[3] || '',
-      forecast_2025: values[4] || ''
-    };
+```json
+{
+  "scripts": {
+    "test:parallel": "cucumber-js --parallel 4 --tags 'not @serial' --format json:reports/report-parallel.json",
+    "test:serial": "cucumber-js --parallel 1 --tags '@serial' --format json:reports/report-serial.json",
+    "test": "npm run test:parallel && npm run test:serial"
   }
 }
+```
+
+#### **(3) 合并 JSON 报告**
+创建合并脚本 `scripts/merge-reports.ts`：
+
+```typescript
+import { merge } from 'json-report-merger';
+import path from 'path';
+
+async function mergeReports() {
+  const inputPatterns = [
+    path.join(__dirname, '../reports/report-*.json'), // 匹配所有报告文件
+  ];
+  const outputFile = path.join(__dirname, '../reports/merged-report.json');
+
+  await merge({
+    inputPatterns,
+    outputFile,
+  });
+  console.log('Reports merged successfully!');
+}
+
+mergeReports();
+```
+
+在 `package.json` 中添加合并命令：
+
+```json
+{
+  "scripts": {
+    "merge-reports": "ts-node scripts/merge-reports.ts"
+  }
+}
+```
+
+#### **(4) 生成 HTML 报告**
+创建 HTML 报告生成脚本 `scripts/generate-html-report.ts`：
+
+```typescript
+const reporter = require('cucumber-html-reporter');
+const path = require('path');
+
+const options = {
+  theme: 'bootstrap',
+  jsonFile: path.join(__dirname, '../reports/merged-report.json'),
+  output: path.join(__dirname, '../reports/cucumber-report.html'),
+  reportSuiteAsScenarios: true,
+  scenarioTimestamp: true,
+  launchReport: true,
+};
+
+reporter.generate(options);
+```
+
+在 `package.json` 中添加生成命令：
+
+```json
+{
+  "scripts": {
+    "generate-html-report": "ts-node scripts/generate-html-report.ts"
+  }
+}
+```
+
+#### **(5) 完整执行流程**
+```bash
+# 1. 运行测试并生成原始 JSON 报告
+npm test
+
+# 2. 合并报告
+npm run merge-reports
+
+# 3. 生成 HTML 报告
+npm run generate-html-report
+```
+
+---
+
+### **4. 最终报告效果**
+- **合并后的 HTML 报告**：  
+  ![HTML 报告示例](https://example.com/cucumber-html-report.png)
+- **包含所有场景的执行状态、时间线和错误详情**。
+
+---
+
+### **5. 自定义报告样式（可选）**
+修改 `cucumber-html-reporter` 的配置（如主题、颜色）：
+
+```typescript
+const options = {
+  theme: 'hierarchy', // 可选主题：bootstrap、hierarchy、foundation
+  metadata: {
+    "App Version": "1.0.0",
+    "Test Environment": "Production"
+  },
+  // 更多配置见 https://github.com/cucumber/cucumber-js/blob/main/docs/formatters.md#html
+};
+```
+
+---
+
+### **6. 注意事项**
+- **报告文件路径**：确保 `reports` 目录存在，或脚本中自动创建。
+- **依赖兼容性**：确认 `json-report-merger` 与 Cucumber 版本兼容。
+- **并行执行顺序**：合并后的报告可能打乱原始执行顺序，但不影响最终结果统计。
+
+---
+
+### **7. 替代方案（无合并工具）**
+如果不想引入额外依赖，可手动拼接 JSON 报告：
+
+```typescript
+// scripts/merge-reports-manual.ts
+import fs from 'fs';
+import path from 'path';
+
+const reportsDir = path.join(__dirname, '../reports');
+const outputFile = path.join(reportsDir, 'merged-report.json');
+
+const reportFiles = fs.readdirSync(reportsDir)
+  .filter(file => file.startsWith('report-') && file.endsWith('.json'));
+
+const mergedReport = [];
+for (const file of reportFiles) {
+  const content = fs.readFileSync(path.join(reportsDir, file), 'utf-8');
+  mergedReport.push(...JSON.parse(content));
+}
+
+fs.writeFileSync(outputFile, JSON.stringify(mergedReport, null, 2));
+```
+
+---
+
+### **总结**
+通过 `JSON 报告合并 + HTML 生成`，可以无缝整合并行和串行测试的结果，最终得到一个统一的、可视化的测试报告。此方案适用于需要分批次执行测试但需集中查看结果的场景。
